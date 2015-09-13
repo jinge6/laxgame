@@ -1,0 +1,61 @@
+<div>
+  <h1><%= @game.name %></h1>
+  <img id="moveToSpot" hidden="true" src="<%= image_url('moveoption.png') %>">
+  <img id="a1_master" hidden="true" src="<%= image_url("a1.png") %>">
+  <img id="d1_2_master" hidden="true" src="<%= image_url("d1_2.png") %>">
+  <img id="ball_master" hidden="true" src="<%= image_url("ball.png") %>">
+</div>
+<div class="fieldContainer">
+</div>
+
+<%= link_to 'Back', games_path %>
+
+<script>
+  $(document).ready(function () {
+    initialiseRowsAndColumns();
+    initialiseMoveables();
+
+    var $players = $(".player");
+    $players.draggable({containment: 'fieldContainer', revert: "invalid"});
+    $dropContainer = $(".fieldContainer");
+
+    $dropContainer.droppable({
+      accept: ".player",
+      activate: dragStarted,
+      drop: dragDrop
+    });
+
+    function dragStarted(e, ui)
+    {
+      if (ui.draggable[0].id.indexOf("ball") == -1)
+      {
+        var containmentCoords = getContainmentCoords(parseInt(ui.draggable[0].style["left"].replace("px", "")), parseInt(ui.draggable[0].style["top"].replace("px", "")));
+
+        $("#" + ui.draggable[0].id).draggable("option", "containment", containmentCoords);
+        $("#" + ui.draggable[0].id).data('uiDraggable')._setContainment();
+
+        var row = parseInt(ui.draggable[0].style["top"].replace("px", "")) / moveablesSize;
+        var column = parseInt(ui.draggable[0].style["left"].replace("px", "")) / moveablesSize;
+        addMoveOptions(row, column);
+        $('.moveOption').fadeIn(200);
+      }
+    }
+
+    function dragDrop(e,ui)
+    {
+      var id = ui.draggable[0].id;
+      var xPos = parseInt(ui.draggable[0].style["left"].replace("px", ""));
+      var yPos = parseInt(ui.draggable[0].style["top"].replace("px", ""));
+      var newXPos = Math.round(xPos / moveablesSize) * moveablesSize;
+      var newYPos = Math.round(yPos / moveablesSize) * moveablesSize;
+      var col = (newXPos / moveablesSize);
+      var row = (newYPos / moveablesSize);
+
+      $('.moveOption').fadeOut(200);
+      $('.moveOption').promise().done(function (){$('.moveOption').remove()});
+      $("#" + id).remove();
+      addMoveable(id, row, col);
+    }
+  });
+
+</script>
