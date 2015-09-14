@@ -6,6 +6,7 @@
   height: 800px;
   overflow: hidden;
   background-image: url(laxfield.jpg);
+  position: absolute;
 }
 
 .rowCol{
@@ -23,6 +24,11 @@
 
 .moveable {
   cursor: move;
+}
+
+.playerStartingPoint
+{
+  position: absolute;
 }
 
 .player {

@@ -29,14 +29,15 @@
     {
       if (ui.draggable[0].id.indexOf("ball") == -1)
       {
-        var containmentCoords = getContainmentCoords(parseInt(ui.draggable[0].style["left"].replace("px", "")), parseInt(ui.draggable[0].style["top"].replace("px", "")));
+        addMoveOptions(ui.draggable[0].id);
+        var containmentCoords = getContainmentCoords(ui.draggable[0].id);
 
         $("#" + ui.draggable[0].id).draggable("option", "containment", containmentCoords);
         $("#" + ui.draggable[0].id).data('uiDraggable')._setContainment();
 
         var row = parseInt(ui.draggable[0].style["top"].replace("px", "")) / moveablesSize;
         var column = parseInt(ui.draggable[0].style["left"].replace("px", "")) / moveablesSize;
-        addMoveOptions(row, column);
+
         $('.moveOption').fadeIn(200);
       }
     }
@@ -54,7 +55,7 @@
       $('.moveOption').fadeOut(200);
       $('.moveOption').promise().done(function (){$('.moveOption').remove()});
       $("#" + id).remove();
-      addMoveable(id, row, col);
+      addMoveable(nextMove(), id, row, col);
     }
   });
 
