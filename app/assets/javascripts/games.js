@@ -45,6 +45,8 @@ function initialiseMoveables()
     addMoveable(0, "a1", 3, 3);
     addMoveable(0, "d1_2", 2, 3);
     addMoveable(0, "ball", 8, 4);
+    addMoveable(0, "fo", 7, 4);
+    addMoveable(0, "fo_2", 8, 4);
 }
 
 function addMoveable(move, id, row, col)
@@ -56,7 +58,14 @@ function addMoveable(move, id, row, col)
     var $img = $('#' + id + '_master').clone();
     $img.attr('id', id);
     $img.show();
-    $img.css({left: x, top: y}).attr('class', 'player moveable');
+    if (id.indexOf('ball') >= 0)
+    {
+        $img.css({left: x, top: y}).attr('class', 'ball moveable');
+    }
+    else
+    {
+        $img.css({left: x, top: y}).attr('class', 'player moveable');
+    }
     $(moveableID).append($img);
     saveMove(move, id, row, col);
 
@@ -106,6 +115,42 @@ function getMoveableID(row, col)
 function getCoordinate(rowOrCol)
 {
     return rowOrCol * moveablesSize
+}
+
+function getCountDownDate() {
+    selectedDate = new Date().valueOf() + 5000;
+    return selectedDate.toString()
+}
+
+function runFaceoff()
+{
+    $('#clock').countdown(getCountDownDate())
+        .on('update.countdown', function(event) {
+            var format = '%S';
+            $(this).html(event.strftime(format));
+        })
+        .on('finish.countdown', function(event) {
+            $(this).html('Draw');
+            flickBallOut();
+            $('#ball').click(function() {
+                alert( "You Win Sucker" );
+            });
+        });
+}
+
+function flickBallOut()
+{
+    var row = 8;
+    var col = 4;
+
+    while (row == 8 && col == 4)
+    {
+        row = 7 + Math.floor(Math.random() * 3);
+        col = 2 + Math.floor(Math.random() * 6);
+    }
+
+    $('#ball').css('left', getCoordinate(col) + "px");
+    $('#ball').css('top', getCoordinate(row) + "px");
 }
 
 function getMovesOriginalCoord(id, xOrY)

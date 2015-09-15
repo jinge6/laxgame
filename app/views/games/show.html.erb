@@ -1,17 +1,26 @@
 <div>
-  <h1><%= @game.name %></h1>
   <img id="moveToSpot" hidden="true" src="<%= image_url('moveoption.png') %>">
   <img id="a1_master" hidden="true" src="<%= image_url("a1.png") %>">
   <img id="d1_2_master" hidden="true" src="<%= image_url("d1_2.png") %>">
+  <img id="fo_master" hidden="true" src="<%= image_url("fo.png") %>">
+  <img id="fo_2_master" hidden="true" src="<%= image_url("fo_2.png") %>">
   <img id="ball_master" hidden="true" src="<%= image_url("ball.png") %>">
 </div>
-<div class="fieldContainer">
-</div>
 
-<%= link_to 'Back', games_path %>
+<table>
+  <tbody>
+  <tr valign="top">
+    <td>Trash Talk Panel</td>
+    <td width="400"><div class="fieldContainer"></div></td>
+    <td><div id="clock" class="jumbo"></div></td>
+  </tr>
+  </tbody>
+</table>
+<div><%= link_to 'Back', games_path %></div>
 
 <script>
-  $(document).ready(function () {
+  $(document).ready(function ()
+  {
     initialiseRowsAndColumns();
     initialiseMoveables();
 
@@ -57,6 +66,12 @@
       $("#" + id).remove();
       addMoveable(nextMove(), id, row, col);
     }
+    var mode = "FO";
+    if (mode == "FO")
+    {
+      runFaceoff();
+    }
+
   });
 
 </script>

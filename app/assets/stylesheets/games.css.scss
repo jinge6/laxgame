@@ -1,6 +1,9 @@
-// Place all the styles related to the games controller here.
-// They will automatically be included in application.css.
-// You can use Sass (SCSS) here: http://sass-lang.com/
+.jumbo {
+  font-size: 80px;
+  font-weight: bold;
+  padding-top: 350px;
+}
+
 .fieldContainer {
   width: 400px;
   height: 800px;
@@ -41,6 +44,20 @@
   -ms-transition-duration: 0.1s;
   transition-duration: 0.1s;
   z-index: 1500;
+  vertical-align:bottom;
+  position: absolute;
+}
+
+.ball {
+  -webkit-transition-timing-function: ease-in-out;
+  -moz-transition-timing-function: ease-in-out;
+  -ms-transition-timing-function: ease-in-out;
+  transition-timing-function: ease-in-out;
+  -webkit-transition-duration: 1.0s;
+  -moz-transition-duration: 1.0s;
+  -ms-transition-duration: 1.0s;
+  transition-duration: 1.0s;
+  z-index: 1600;
   vertical-align:bottom;
   position: absolute;
 }
