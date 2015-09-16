@@ -1,6 +1,8 @@
 var moveablesSize = 50;
 var moves = new Array();
 var currentMove = 0;
+var gameState = "FACE_OFF"; // START, FACE_OFF, PLAY, WAITING, CAN_SHOOT, SHOOT, SAVE, WON, DONE
+var team;
 
 function initialiseRowsAndColumns()
 {
@@ -45,8 +47,8 @@ function initialiseMoveables()
     addMoveable(0, "a1", 3, 3);
     addMoveable(0, "d1_2", 2, 3);
     addMoveable(0, "ball", 8, 4);
-    addMoveable(0, "fo", 7, 4);
-    addMoveable(0, "fo_2", 8, 4);
+    addMoveable(0, "fo", 8, 0);
+    addMoveable(0, "fo_2", 7, 7);
 }
 
 function addMoveable(move, id, row, col)
@@ -117,29 +119,97 @@ function getCoordinate(rowOrCol)
     return rowOrCol * moveablesSize
 }
 
-function getCountDownDate() {
-    selectedDate = new Date().valueOf() + 5000;
+function getCountDownDate(millisecs) {
+    selectedDate = new Date().valueOf() + millisecs;
     return selectedDate.toString()
+}
+
+function gameLoop()
+{
+    switch (gameState)
+    {
+        case "START":
+            break;
+        case "FACE_OFF":
+            runFaceoff();
+            break;
+        case "PLAY":
+            runPlay();
+            break;
+        case "WAITING":
+            break;
+        case "CAN_SHOOT":
+            break;
+        case "SHOOT":
+            break;
+        case "GOALIE_SAVE":
+            break;
+        case "WON":
+            break;
+        case "FINISHED":
+            break;
+    }
 }
 
 function runFaceoff()
 {
-    $('#clock').countdown(getCountDownDate())
+    $('#clock').countdown(getCountDownDate(5000))
         .on('update.countdown', function(event) {
             var format = '%S';
             $(this).html(event.strftime(format));
         })
         .on('finish.countdown', function(event) {
-            $(this).html('Draw');
-            flickBallOut();
-            $('#ball').click(function() {
-                alert( "You Win Sucker" );
-            });
+            if (gameState == "FACE_OFF")
+            {
+                $(this).html('Draw');
+                flickBallOut();
+                $(document).on('mousemove', function (e) {
+                    var containerOffset = $(".fieldContainer").offset();
+
+                    $('#fo').css({
+                        left: e.pageX - containerOffset.left - moveablesSize,
+                        top: e.pageY - containerOffset.top
+                    });
+                    $('#fo_2').css({
+                        left: e.pageX - containerOffset.left,
+                        top: e.pageY - containerOffset.top
+                    });
+                });
+                $('#ball').click(function () {
+                    $('#clock').html('AJAX Feedback here');
+                    $(document).off('mousemove');
+                    gameState = "PLAY";
+                    $('.moveOption').remove();
+                    // TODO set the left an top properly
+                    setContainment("fo");
+                    gameLoop();
+                });
+            }
+        });
+}
+
+function runPlay()
+{
+    currentMove++;
+    $('#clock').countdown(getCountDownDate(10000))
+        .on('update.countdown', function(event) {
+            var format = '%S';
+            $(this).html(event.strftime(format));
+        })
+        .on('finish.countdown', function(event) {
+            if (gameState == "FACE_OFF")
+            {
+                $(this).html('AJAX Feedback here');
+            }
         });
 }
 
 function flickBallOut()
 {
+    // reset containment
+    $(".player").draggable({containment: 'fieldContainer', revert: "invalid"});
+    $dropContainer = $(".fieldContainer");
+
     var row = 8;
     var col = 4;
 
@@ -236,7 +306,21 @@ function getContainmentCoords(id)
     return [x1, y1, x2 ,y2]
 }
 
-function addMoveOptions(id)
+function setContainment(id)
+{
+    addVisualMoveOptions(id);
+    addContainmentToMoveable(id);
+}
+
+function addContainmentToMoveable(id)
+{
+    var containmentCoords = getContainmentCoords(id);
+
+    $("#" + id).draggable("option", "containment", containmentCoords);
+    $("#" + id).data('uiDraggable')._setContainment();
+}
+
+function addVisualMoveOptions(id)
 {
     var row = getMovesOriginalRowOrColumn(id, "row");
     var col = getMovesOriginalRowOrColumn(id, "col");

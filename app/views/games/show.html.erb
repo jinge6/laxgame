@@ -6,7 +6,7 @@
   <img id="fo_2_master" hidden="true" src="<%= image_url("fo_2.png") %>">
   <img id="ball_master" hidden="true" src="<%= image_url("ball.png") %>">
 </div>
-
+<div id="status"></div>
 <table>
   <tbody>
   <tr valign="top">
@@ -24,6 +24,7 @@
     initialiseRowsAndColumns();
     initialiseMoveables();
 
+
     var $players = $(".player");
     $players.draggable({containment: 'fieldContainer', revert: "invalid"});
     $dropContainer = $(".fieldContainer");
@@ -38,15 +39,7 @@
     {
       if (ui.draggable[0].id.indexOf("ball") == -1)
       {
-        addMoveOptions(ui.draggable[0].id);
-        var containmentCoords = getContainmentCoords(ui.draggable[0].id);
-
-        $("#" + ui.draggable[0].id).draggable("option", "containment", containmentCoords);
-        $("#" + ui.draggable[0].id).data('uiDraggable')._setContainment();
-
-        var row = parseInt(ui.draggable[0].style["top"].replace("px", "")) / moveablesSize;
-        var column = parseInt(ui.draggable[0].style["left"].replace("px", "")) / moveablesSize;
-
+        setContainment(ui.draggable[0].id);
         $('.moveOption').fadeIn(200);
       }
     }
@@ -66,11 +59,7 @@
       $("#" + id).remove();
       addMoveable(nextMove(), id, row, col);
     }
-    var mode = "FO";
-    if (mode == "FO")
-    {
-      runFaceoff();
-    }
+    gameLoop();
 
   });
 
