@@ -24,7 +24,6 @@
     initialiseRowsAndColumns();
     initialiseMoveables();
 
-
     var $players = $(".player");
     $players.draggable({containment: 'fieldContainer', revert: "invalid"});
     $dropContainer = $(".fieldContainer");
@@ -59,8 +58,8 @@
       $("#" + id).remove();
       addMoveable(currentMove, id, row, col);
     }
-    gameLoop();
 
+    gameLoop();
   });
 
 </script>

@@ -103,7 +103,7 @@ function addMoveableStartingPointBack(id)
     var y = getCoordinate(row);
     var x = getCoordinate(col);
     var $img = $('#' + id + '_master').clone();
-    $img.css({left: x, top: y}).attr({class: 'playerStartingPoint', id: id +'_start'});
+    $img.css({left: x, top: y}).attr({class: 'playerStartingPoint', id: id +'_start'}).zIndex(1000);
     $img.show();
     $img.appendTo($(moveableID));
 }
@@ -125,9 +125,8 @@ function getCountDownDate(millisecs) {
 
 function gameLoop()
 {
-    $('#ball').unbind();
     $('#clock').unbind();
-    //$('.playerStartingPoint').remove();
+    $('.playerStartingPoint').remove();
     switch (gameState)
     {
         case "START":
@@ -183,10 +182,11 @@ function runFaceoff()
                 var col = calculateRowOrColumnCoordinate($('#fo').css('left').replace("px", ""));
                 var row = calculateRowOrColumnCoordinate($('#fo').css('top').replace("px", ""));
                 $("#fo").remove();
-                addMoveable(currentMove, "fo", row, col);
+                addMoveable(currentMove, "fo", row, col+1);
                 $("#ball").remove();
-                addMoveable(currentMove, "ball", row, col+1);
+                addMoveable(currentMove, "ball", row, col);
                 gameState = "PLAY";
+                $('#ball').unbind();
                 gameLoop();
             });
         });
@@ -217,6 +217,7 @@ function runPlay()
 function addMovesForThisPlay()
 {
     $('#ball').draggable({containment: '.fieldContainer', revert: "invalid"});
+
     $('#clock').countdown(getCountDownDate(5000))
         .on('update.countdown', function(event) {
             var format = '%S';
@@ -241,7 +242,7 @@ function animateThisMovesPlay()
             $('#' +  moves[i][1] + '_start').remove();
         }
     }
-    gameLoop();
+    console.log('done');
 }
 
 function getMovesOriginalCoord(id, xOrY)
