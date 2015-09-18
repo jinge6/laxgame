@@ -29,11 +29,6 @@
   cursor: move;
 }
 
-.playerStartingPoint
-{
-  position: absolute;
-}
-
 .player {
   -webkit-transition-timing-function: ease-in-out;
   -moz-transition-timing-function: ease-in-out;
@@ -43,6 +38,20 @@
   -moz-transition-duration: 0.1s;
   -ms-transition-duration: 0.1s;
   transition-duration: 0.1s;
+  z-index: 1500;
+  vertical-align:bottom;
+  position: absolute;
+}
+
+.playerStartingPoint {
+  -webkit-transition-timing-function: ease-in-out;
+  -moz-transition-timing-function: ease-in-out;
+  -ms-transition-timing-function: ease-in-out;
+  transition-timing-function: ease-in-out;
+  -webkit-transition-duration: 1.0s;
+  -moz-transition-duration: 1.0s;
+  -ms-transition-duration: 1.0s;
+  transition-duration: 1.0s;
   z-index: 1500;
   vertical-align:bottom;
   position: absolute;

@@ -32,11 +32,6 @@ function initialiseRowsAndColumns()
     }
 }
 
-function nextMove()
-{
-    return currentMove + 1;
-}
-
 function previousMove()
 {
     return currentMove==0?0:currentMove - 1;
@@ -44,8 +39,8 @@ function previousMove()
 
 function initialiseMoveables()
 {
-    addMoveable(0, "a1", 3, 3);
-    addMoveable(0, "d1_2", 2, 3);
+    //addMoveable(0, "a1", 3, 3);
+    //addMoveable(0, "d1_2", 2, 3);
     addMoveable(0, "ball", 8, 4);
     addMoveable(0, "fo", 8, 0);
     addMoveable(0, "fo_2", 7, 7);
@@ -68,6 +63,11 @@ function addMoveable(move, id, row, col)
     {
         $img.css({left: x, top: y}).attr('class', 'player moveable');
     }
+    if (gameState == "PLAY")
+    {
+        $img.css({opacity: 0.2});
+        addMoveableStartingPointBack(id);
+    }
     $(moveableID).append($img);
     saveMove(move, id, row, col);
 
@@ -89,14 +89,13 @@ function saveMove(move, id, row, col)
             break;
         }
     }
-    if (found == false)
+    if (found == false && currentMove > 1)
     {
         moves.push([move,id, row, col]);
-        addFadedStartingImage(id, row, col);
     }
 }
 
-function addFadedStartingImage(id)
+function addMoveableStartingPointBack(id)
 {
     var row = getMovesOriginalRowOrColumn(id, "row");
     var col = getMovesOriginalRowOrColumn(id, "col");
@@ -104,9 +103,9 @@ function addFadedStartingImage(id)
     var y = getCoordinate(row);
     var x = getCoordinate(col);
     var $img = $('#' + id + '_master').clone();
+    $img.css({left: x, top: y}).attr({class: 'playerStartingPoint', id: id +'_start'});
     $img.show();
-    $img.css({left: x, top: y, opacity: 0.1}).attr('class', 'playerStartingPoint');
-    $(moveableID).append($img);
+    $img.appendTo($(moveableID));
 }
 
 function getMoveableID(row, col)
@@ -126,6 +125,9 @@ function getCountDownDate(millisecs) {
 
 function gameLoop()
 {
+    $('#ball').unbind();
+    $('#clock').unbind();
+    //$('.playerStartingPoint').remove();
     switch (gameState)
     {
         case "START":
@@ -153,63 +155,45 @@ function gameLoop()
 
 function runFaceoff()
 {
-    $('#clock').countdown(getCountDownDate(5000))
+    $('#clock').countdown(getCountDownDate(2000))
         .on('update.countdown', function(event) {
             var format = '%S';
             $(this).html(event.strftime(format));
         })
         .on('finish.countdown', function(event) {
-            if (gameState == "FACE_OFF")
-            {
-                $(this).html('Draw');
-                flickBallOut();
-                $(document).on('mousemove', function (e) {
-                    var containerOffset = $(".fieldContainer").offset();
-
-                    $('#fo').css({
-                        left: e.pageX - containerOffset.left - moveablesSize,
-                        top: e.pageY - containerOffset.top
-                    });
-                    $('#fo_2').css({
-                        left: e.pageX - containerOffset.left,
-                        top: e.pageY - containerOffset.top
-                    });
+            $(this).html('Draw');
+            flickBallOut();
+            var containerOffset = $(".fieldContainer").offset();
+            var position = $('#ball').position();
+            $('#fo_2').css({
+                left: position.left,
+                top: position.top
+            });
+            $(document).on('mousemove', function (e) {
+                $('#fo').css({
+                    left: e.pageX - containerOffset.left - moveablesSize,
+                    top: e.pageY - containerOffset.top
                 });
-                $('#ball').click(function () {
-                    $('#clock').html('AJAX Feedback here');
-                    $(document).off('mousemove');
-                    gameState = "PLAY";
-                    $('.moveOption').remove();
-                    // TODO set the left an top properly
-                    setContainment("fo");
-                    gameLoop();
-                });
-            }
-        });
-}
-
-function runPlay()
-{
-    currentMove++;
-    $('#clock').countdown(getCountDownDate(10000))
-        .on('update.countdown', function(event) {
-            var format = '%S';
-            $(this).html(event.strftime(format));
-        })
-        .on('finish.countdown', function(event) {
-            if (gameState == "FACE_OFF")
-            {
-                $(this).html('AJAX Feedback here');
-            }
+            });
+            $('#ball').click(function () {
+                currentMove++;
+                $('#clock').html('AJAX Feedback here');
+                $(document).off('mousemove');
+                $('.moveOption').remove();
+                var col = calculateRowOrColumnCoordinate($('#fo').css('left').replace("px", ""));
+                var row = calculateRowOrColumnCoordinate($('#fo').css('top').replace("px", ""));
+                $("#fo").remove();
+                addMoveable(currentMove, "fo", row, col);
+                $("#ball").remove();
+                addMoveable(currentMove, "ball", row, col+1);
+                gameState = "PLAY";
+                gameLoop();
+            });
         });
 }
 
 function flickBallOut()
 {
-    // reset containment
-    $(".player").draggable({containment: 'fieldContainer', revert: "invalid"});
-    $dropContainer = $(".fieldContainer");
-
     var row = 8;
     var col = 4;
 
@@ -221,6 +205,43 @@ function flickBallOut()
 
     $('#ball').css('left', getCoordinate(col) + "px");
     $('#ball').css('top', getCoordinate(row) + "px");
+    currentMove++;
+}
+
+function runPlay()
+{
+    currentMove++;
+    addMovesForThisPlay();
+}
+
+function addMovesForThisPlay()
+{
+    $('#ball').draggable({containment: '.fieldContainer', revert: "invalid"});
+    $('#clock').countdown(getCountDownDate(5000))
+        .on('update.countdown', function(event) {
+            var format = '%S';
+            $(this).html(event.strftime(format));
+        })
+        .on('finish.countdown', function(event) {
+            $(this).html('now move them');
+            animateThisMovesPlay();
+        });
+}
+
+function animateThisMovesPlay()
+{
+    for (var i = 0; i < moves.length; i++)
+    {
+        if (moves[i][0] == currentMove)
+        {
+            var moveFrom = getIDCoordinatesByMove(moves[i][1], previousMove());
+            var moveTo = getIDCoordinatesByMove(moves[i][1], currentMove);
+            $('#' +  moves[i][1] + '_start').css({left: getCoordinate(moveFrom[0]) - getCoordinate(moveTo[0]), top: getCoordinate(moveFrom[0]) - getCoordinate(moveTo[1])});
+            $('#' +  moves[i][1]).css('opacity', 1);
+            $('#' +  moves[i][1] + '_start').remove();
+        }
+    }
+    gameLoop();
 }
 
 function getMovesOriginalCoord(id, xOrY)
@@ -247,12 +268,11 @@ function getMovesOriginalCoord(id, xOrY)
 
 function getMovesOriginalRowOrColumn(id, rowOrColumn)
 {
-
     var rowOrCol = 0;
 
-    for (var i=0; i<moves.length; i++)
+    for (var i=moves.length-1; i>=0; i--)
     {
-        if (moves[i][0] == previousMove() && moves[i][1] == id)
+        if (moves[i][0] < currentMove && moves[i][1] == id)
         {
             if (rowOrColumn == "row")
             {
@@ -268,14 +288,50 @@ function getMovesOriginalRowOrColumn(id, rowOrColumn)
     return rowOrCol;
 }
 
+function getMoveablesCurrentRowOrColumn(id, rowOrColumn)
+{
+    var rowOrCol = 0;
+
+    for (var i=moves.length-1; i>=0; i--)
+    {
+        if (moves[i][0] == currentMove && moves[i][1] == id)
+        {
+            if (rowOrColumn == "row")
+            {
+                rowOrCol = moves[i][2];
+            }
+            else
+            {
+                rowOrCol = moves[i][3];
+            }
+            break;
+        }
+    }
+    return rowOrCol;
+}
+
+function getIDCoordinatesByMove(id, move)
+{
+    var rowCoord, colCoord;
+
+    for (var i=0; i<moves.length; i++)
+    {
+        if (moves[i][0] == move && moves[i][1] == id)
+        {
+            rowCoord = moves[i][2];
+            colCoord = moves[i][3];
+            break;
+        }
+    }
+    return [rowCoord, colCoord];
+}
+
 function getContainmentCoords(id)
 {
     var row = getMovesOriginalRowOrColumn(id, "row");
     var col = getMovesOriginalRowOrColumn(id, "col");
 
     var containerOffset = $(".fieldContainer").offset();
-    var containerOffsetXPos = containerOffset.top;
-    var containerOffsetYPos = containerOffset.left;
     var startRow = row - 2;
     var stopRow = row + 2;
     var startCol = col - 2;
@@ -298,10 +354,10 @@ function getContainmentCoords(id)
         stopCol = 7;
     }
 
-    var x1 = getCoordinate(startCol) + containerOffsetYPos;
-    var y1 = getCoordinate(startRow) + containerOffsetXPos;
-    var x2 = getCoordinate(stopCol) + containerOffsetYPos;
-    var y2 = getCoordinate(stopRow) + containerOffsetXPos;
+    var x1 = getCoordinate(startCol) + containerOffset.left;
+    var y1 = getCoordinate(startRow) + containerOffset.top;
+    var x2 = getCoordinate(stopCol) + containerOffset.left;
+    var y2 = getCoordinate(stopRow) + containerOffset.top;
 
     return [x1, y1, x2 ,y2]
 }
@@ -318,6 +374,16 @@ function addContainmentToMoveable(id)
 
     $("#" + id).draggable("option", "containment", containmentCoords);
     $("#" + id).data('uiDraggable')._setContainment();
+}
+
+function calculateRoundedGridCoordinate(coord)
+{
+    return Math.round(coord / moveablesSize) * moveablesSize
+}
+
+function calculateRowOrColumnCoordinate(coord)
+{
+    return Math.round((coord / moveablesSize),0)
 }
 
 function addVisualMoveOptions(id)
@@ -356,6 +422,4 @@ function addVisualMoveOptions(id)
             $(moveableID).append($moveOption);
         }
     }
-    $(moveableID).width((stopCol-startCol+1)*50);
-    $(moveableID).height((stopRow-startRow+1)*50);
 }

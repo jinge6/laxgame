@@ -6,13 +6,13 @@
   <img id="fo_2_master" hidden="true" src="<%= image_url("fo_2.png") %>">
   <img id="ball_master" hidden="true" src="<%= image_url("ball.png") %>">
 </div>
-<div id="status"></div>
+<div id="status" class="jumbo"></div>
 <table>
   <tbody>
   <tr valign="top">
     <td>Trash Talk Panel</td>
     <td width="400"><div class="fieldContainer"></div></td>
-    <td><div id="clock" class="jumbo"></div></td>
+    <td><div id="clock"></div></td>
   </tr>
   </tbody>
 </table>
@@ -30,7 +30,7 @@
     $dropContainer = $(".fieldContainer");
 
     $dropContainer.droppable({
-      accept: ".player",
+      accept: ".moveable",
       activate: dragStarted,
       drop: dragDrop
     });
@@ -49,15 +49,15 @@
       var id = ui.draggable[0].id;
       var xPos = parseInt(ui.draggable[0].style["left"].replace("px", ""));
       var yPos = parseInt(ui.draggable[0].style["top"].replace("px", ""));
-      var newXPos = Math.round(xPos / moveablesSize) * moveablesSize;
-      var newYPos = Math.round(yPos / moveablesSize) * moveablesSize;
-      var col = (newXPos / moveablesSize);
-      var row = (newYPos / moveablesSize);
+      var newXPos = calculateRoundedGridCoordinate(xPos);
+      var newYPos = calculateRoundedGridCoordinate(yPos);
+      var col = calculateRowOrColumnCoordinate(newXPos);
+      var row = calculateRowOrColumnCoordinate(newYPos);
 
       $('.moveOption').fadeOut(200);
       $('.moveOption').promise().done(function (){$('.moveOption').remove()});
       $("#" + id).remove();
-      addMoveable(nextMove(), id, row, col);
+      addMoveable(currentMove, id, row, col);
     }
     gameLoop();
 
