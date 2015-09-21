@@ -44,6 +44,31 @@ function initialiseMoveables()
     addMoveable(0, "ball", 8, 4);
     addMoveable(0, "fo", 8, 0);
     addMoveable(0, "fo_2", 7, 7);
+
+    addSprite(0, "sprite", 3, 3);
+
+}
+
+function addSprite(move, id, row, col)
+{
+    var moveableID = getMoveableID(row, col);
+
+    var y = getCoordinate(row);
+    var x = getCoordinate(col);
+    var $sprite = $(moveableID).append("<div id='sprite1'></div>")
+    var $sprite1 = $('#sprite1').css("backgroundImage", "url(/assets/running_sprite.png)");
+    $sprite1.css({height: 50, width: 50});
+    $sprite.css({left: x, top: y}).attr('class', 'player moveable');
+
+    var totalNumberFrames = 3;
+    var frameNumber = 0;
+    setInterval(function(){
+        $sprite1.css("backgroundPosition", "" +  frameNumber * moveablesSize + "px 0px");
+        frameNumber = (frameNumber + 1) % totalNumberFrames;
+    }, 100);
+
+    var $players = $(".player");
+    $players.draggable({containment: '.fieldContainer', revert: "invalid"});
 }
 
 function addMoveable(move, id, row, col)
