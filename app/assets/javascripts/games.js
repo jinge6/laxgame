@@ -100,12 +100,24 @@ function addMoveableStartingPointBack(id)
     var row = getMovesOriginalRowOrColumn(id, "row");
     var col = getMovesOriginalRowOrColumn(id, "col");
     var moveableID = getMoveableID(row, col);
-    var y = getCoordinate(row);
-    var x = getCoordinate(col);
-    var $img = $('#' + id + '_master').clone();
-    $img.css({left: x, top: y}).attr({class: 'playerStartingPoint', id: id +'_start'}).zIndex(1000);
-    $img.show();
-    $img.appendTo($(moveableID));
+    if ($(moveableID).has("img.playerStartingPoint").length == 0 && id.indexOf("ball") == 0)
+    {
+        var y = getCoordinate(row);
+        var x = getCoordinate(col);
+        var $img = $('#' + id + '_master').clone();
+        $img.css({left: x, top: y}).attr({class: 'playerStartingPoint', id: id + '_start'}).zIndex(1000);
+        $img.show();
+        $img.appendTo($(moveableID));
+    }
+    else if ($(moveableID).has("img.ballStartingPoint").length == 0)
+    {
+        var y = getCoordinate(row);
+        var x = getCoordinate(col);
+        var $img = $('#' + id + '_master').clone();
+        $img.css({left: x, top: y}).attr({class: 'ballStartingPoint', id: id + '_start'}).zIndex(1000);
+        $img.show();
+        $img.appendTo($(moveableID));
+    }
 }
 
 function getMoveableID(row, col)
@@ -154,7 +166,7 @@ function gameLoop()
 
 function runFaceoff()
 {
-    $('#clock').countdown(getCountDownDate(2000))
+    $('#clock').countdown(getCountDownDate(1000))
         .on('update.countdown', function(event) {
             var format = '%S';
             $(this).html(event.strftime(format));
@@ -231,19 +243,49 @@ function addMovesForThisPlay()
 
 function animateThisMovesPlay()
 {
+    var movesInThisPlay = getMovesInThisPlay(currentMove);
+    var movesCompleted = 0;
+
     for (var i = 0; i < moves.length; i++)
     {
         if (moves[i][0] == currentMove)
         {
             var moveFrom = getIDCoordinatesByMove(moves[i][1], previousMove());
             var moveTo = getIDCoordinatesByMove(moves[i][1], currentMove);
-            $('#' +  moves[i][1] + '_start').css({left: getCoordinate(moveFrom[0]) - getCoordinate(moveTo[0]), top: getCoordinate(moveFrom[0]) - getCoordinate(moveTo[1])});
-            $('#' +  moves[i][1]).css('opacity', 1);
-            $('#' +  moves[i][1] + '_start').remove();
+            $('#' +  moves[i][1] + '_start').css({top: getCoordinate(moveTo[0]), left: getCoordinate(moveTo[1])});
+            var id = moves[i][1];
+            $('#' +  moves[i][1] + '_start').one("transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd", function()
+            {
+                var id = $(this).attr('id').substring(0, $(this).attr('id').indexOf('_start'));
+                $('#' + id).css('opacity', 1);
+                $(this).remove();
+                movesCompleted++;
+                if (movesInThisPlay == movesCompleted)
+                {
+                    gameLoop();
+                }
+            });
         }
     }
-    console.log('done');
+    if (movesInThisPlay == 0)
+    {
+        gameLoop();
+    }
 }
+
+function getMovesInThisPlay(move)
+{
+    var moveCount = 0;
+    for (var i = 0; i < moves.length; i++)
+    {
+        if (moves[i][0] == move)
+        {
+            moveCount++;
+        }
+    }
+    return moveCount;
+}
+
 
 function getMovesOriginalCoord(id, xOrY)
 {

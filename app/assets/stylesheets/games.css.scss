@@ -57,6 +57,20 @@
   position: absolute;
 }
 
+.ballStartingPoint {
+  -webkit-transition-timing-function: ease-in-out;
+  -moz-transition-timing-function: ease-in-out;
+  -ms-transition-timing-function: ease-in-out;
+  transition-timing-function: ease-in-out;
+  -webkit-transition-duration: 1.0s;
+  -moz-transition-duration: 1.0s;
+  -ms-transition-duration: 1.0s;
+  transition-duration: 1.0s;
+  z-index: 1500;
+  vertical-align:bottom;
+  position: absolute;
+}
+
 .ball {
   -webkit-transition-timing-function: ease-in-out;
   -moz-transition-timing-function: ease-in-out;
