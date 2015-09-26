@@ -1,10 +1,95 @@
-var moveablesSize = 50;
-var moves = new Array();
-var currentMove = 0;
-var gameState = "FACE_OFF"; // START, FACE_OFF, PLAY, WAITING, CAN_SHOOT, SHOOT, SAVE, WON, DONE
-var team;
+gf = {
 
-function initialiseRowsAndColumns()
+    baseRate: 100,
+    animations: [],
+    moves: [],
+    currentMove: 0,
+    gameState: "FACE_OFF"
+
+};
+
+gf.imagesToPreload = [];
+
+gf.initialise = function(options)
+{
+    $.extend(gf, options);
+}
+
+gf.startGame = function(endCallback, progressCallback) {
+    var images = [];
+    var total = gf.imagesToPreload.length;
+
+    for (var i = 0; i < total; i++) {
+        var image = new Image();
+        images.push(image);
+        image.src = gf.imagesToPreload[i];
+    }
+    var preloadingPoller = setInterval(function() {
+        var counter = 0;
+        var total = gf.imagesToPreload.length;
+        for (var i = 0; i < total; i++) {
+            if (images[i].complete) {
+                counter++;
+            }
+        }
+        if (counter == total) {
+            //we are done!
+            clearInterval(preloadingPoller);
+            endCallback();
+            setInterval(gf.refreshGame, gf.baseRate);
+            gf.time = (new Date()).getTime();
+        } else {
+            if (progressCallback) {
+                counter++;
+                progressCallback((counter / total) * 100);
+            }
+        }
+    }, 100);
+};
+
+gf.preload = function ()
+{
+    gf.initialiseRowsAndColumns();
+    gf.initialiseMoveables();
+}
+
+gf.addImage = function(url)
+{
+    if ($.inArray(url, gf.imagesToPreload) < 0)
+    {
+        gf.imagesToPreload.push(url);
+    }
+}
+
+gf.animation = function(options)
+{
+    var defaultValues = {
+        url: false,
+        width: 50,
+        height: 50,
+        numberOfFrames: 1,
+        currentFrame: 0,
+        offset: 0,
+        rate: 1
+    }
+    $.extend(this, defaultValues, options);
+    if (options.rate)
+    {
+        this.rate = Math.round(this.rate/gf.baseRate);
+    }
+    if (this.url)
+    {
+        gf.addImage(this.url);
+    }
+}
+
+gf.setFrame = function(div, animation) {
+    div.css("backgroundPosition", "-" + (animation.currentFrame * animation.width + animation.offset) + "px 0px");
+}
+
+gf.animations = [];
+
+gf.initialiseRowsAndColumns = function ()
 {
     for(var i = 0; i <= 15; i++)
     {
@@ -32,43 +117,154 @@ function initialiseRowsAndColumns()
     }
 }
 
-function previousMove()
-{
-    return currentMove==0?0:currentMove - 1;
+gf.refreshGame = function (){
+
+    // update animations
+    var finishedAnimations = [];
+
+    for (var i=0; i < gf.animations.length; i++) {
+
+        var animate = gf.animations[i];
+
+        animate.counter++;
+        if (animate.counter == animate.animation.rate) {
+            animate.counter = 0;
+            animate.animation.currentFrame++;
+            if(!animate.loop && animate.animation.currentFrame > animate.animation.numberOfFrames){
+                finishedAnimations.push(i);
+            } else {
+                animate.animation.currentFrame %= animate.animation.numberOfFrames;
+                gf.setFrame(animate.div, animate.animation);
+            }
+        }
+    }
+    for(var i=0; i < finishedAnimations.length; i++){
+        gf.animations.splice(finishedAnimations[i], 1);
+    }
+
+    // execute the callbacks
+    for (var i=0; i < gf.callbacks.length; i++) {
+        var call  = gf.callbacks[i];
+
+        call.counter++;
+        if (call.counter == call.rate) {
+            var currentTime = (new Date()).getTime();
+            call.counter = 0;
+            call.callback(currentTime - gf.time);
+        }
+    }
+    gf.time = (new Date()).getTime();
 }
 
-function initialiseMoveables()
+gf.setAnimation = function(div, animation, loop)
 {
-    //addMoveable(0, "a1", 3, 3);
-    //addMoveable(0, "d1_2", 2, 3);
-    addMoveable(0, "ball", 8, 4);
-    addMoveable(0, "fo", 8, 0);
-    addMoveable(0, "fo_2", 7, 7);
-
-    addSprite(0, "sprite", 3, 3);
-
+    var animate = {
+        animation: $.extend({}, animation),
+        div: div,
+        loop: loop,
+        counter: 0
+    };
+    if (animation.url)
+    {
+        div.css("backgroundImage", "url("+animation.url+")");
+    }
+    // search if this div already has an animation
+    var divFound = false;
+    for (var i=0; i<gf.animations.length; i++)
+    {
+        if (gf.animations[i].div == div)
+        {
+            divFound = true;
+            gf.animations[i] = animate;
+        }
+    }
+    if (!divFound)
+    {
+        gf.animations.push(animate);
+    }
 }
 
-function addSprite(move, id, row, col)
+gf.callbacks = [];
+
+gf.addCallback = function(callback, rate)
 {
-    var moveableID = getMoveableID(row, col);
+    gf.callbacks.push({
+        callback: callback,
+        rate: Math.round(rate/gf.baseRate),
+        counter: 0
+    });
+}
 
-    var y = getCoordinate(row);
-    var x = getCoordinate(col);
-    var $sprite = $(moveableID).append("<div id='sprite1'></div>")
-    var $sprite1 = $('#sprite1').css("backgroundImage", "url(/assets/running_sprite.png)");
-    $sprite1.css({height: 50, width: 50});
-    $sprite.css({left: x, top: y}).attr('class', 'player moveable');
+gf.previousMove = function()
+{
+    return gf.currentMove==0?0:gf.currentMove - 1;
+}
 
-    var totalNumberFrames = 3;
-    var frameNumber = 0;
-    setInterval(function(){
-        $sprite1.css("backgroundPosition", "" +  frameNumber * moveablesSize + "px 0px");
-        frameNumber = (frameNumber + 1) % totalNumberFrames;
-    }, 100);
+gf.addSprite = function(parent, divId, options)
+{
+    var options = $.extend({
+        x: 0,
+        y: 0,
+        row: 0,
+        col: 0,
+        width: 50,
+        height: 50,
+        rotate: 0,
+        move: gf.currentMove
+    }, options);
+    var sprite = gf.spriteFragment.clone().css({x: options.x, y: options.y, width: options.width, height: options.height}).attr('id', divId).data("gf", options);
+    parent.append(sprite);
+    return sprite;
+}
 
-    var $players = $(".player");
-    $players.draggable({containment: '.fieldContainer', revert: "invalid"});
+gf.transform = function(div, options)
+{
+    var gf = div.data("gf");
+    if (options.rotate !== undefined)
+    {
+        gf.rotate = options.rotate;
+    }
+    div.css("transform", "rotate(" + gf.rotate + "deg)");
+}
+
+gf.spriteFragment = $("<div style='position: absolute; overflow: hidden;' class='gf_sprite'></div>");
+gf.groupFragment = $("<div style='position: absolute; overflow: visible;' class='gf_group'></div>");
+
+gf.addGroup = function(parent, divId, options)
+{
+    var options = $.extend({
+        x: 0,
+        y: 0,
+    }, options);
+    var group = gf.groupFragment.clone().css({left: options.x, top: options.y}).attr('id', divId).data("gf", options);
+    parent.append(group);
+    return group;
+}
+
+gf.x = function(divId, position)
+{
+    if(position)
+    {
+        $('#'+divId).css('left',position);
+        $('#'+divId).data("gf").x = position;
+    }
+    else
+    {
+        return $("#"+divId).data("gf").x;
+    }
+}
+
+gf.y = function(divId, position)
+{
+    if(position)
+    {
+        $('#'+divId).css('top',position);
+        $('#'+divId).data("gf").y = position;
+    }
+    else
+    {
+        return $("#"+divId).data("gf").y;
+    }
 }
 
 function addMoveable(move, id, row, col)
@@ -77,27 +273,38 @@ function addMoveable(move, id, row, col)
 
     var y = getCoordinate(row);
     var x = getCoordinate(col);
-    var $img = $('#' + id + '_master').clone();
-    $img.attr('id', id);
-    $img.show();
+    $(moveableID).append("<div id='" + id + "' style='position: absolute;' class='moveable'></div>")
     if (id.indexOf('ball') >= 0)
     {
-        $img.css({left: x, top: y}).attr('class', 'ball moveable');
+        $('#' + id).css({height: 50, width: 50, backgroundImage: "url(/assets/ball.png)"});
     }
     else
     {
-        $img.css({left: x, top: y}).attr('class', 'player moveable');
+        $('#' + id).css({height: 50, width: 50, backgroundImage: "url(/assets/running_sprite.png)"});
     }
+    $('#' + id).css({left: x, top: y});
+
+
+
     if (gameState == "PLAY")
     {
-        $img.css({opacity: 0.2});
+        $('#' + id).css({opacity: 0.2});
         addMoveableStartingPointBack(id);
     }
-    $(moveableID).append($img);
     saveMove(move, id, row, col);
 
-    var $players = $(".player");
-    $players.draggable({containment: '.fieldContainer', revert: "invalid"});
+    var $movables = $(".moveable");
+    $movables.draggable({containment: '.fieldContainer', revert: "invalid"});
+}
+
+function animate(id)
+{
+    var totalNumberFrames = 3;
+    var frameNumber = 0;
+    setInterval(function(){
+        $('#' + id).css("backgroundPosition", "" +  frameNumber * moveablesSize + "px 0px");
+        frameNumber = (frameNumber + 1) % totalNumberFrames;
+    }, 100);
 }
 
 function saveMove(move, id, row, col)
@@ -116,6 +323,7 @@ function saveMove(move, id, row, col)
     }
     if (found == false && currentMove > 1)
     {
+        console.log('add ' +  id + ' to ' + move, row, col);
         moves.push([move,id, row, col]);
     }
 }
@@ -124,25 +332,22 @@ function addMoveableStartingPointBack(id)
 {
     var row = getMovesOriginalRowOrColumn(id, "row");
     var col = getMovesOriginalRowOrColumn(id, "col");
+    console.log(id + ' original ', row, col);
     var moveableID = getMoveableID(row, col);
-    if ($(moveableID).has("img.playerStartingPoint").length == 0 && id.indexOf("ball") == 0)
+    var y = getCoordinate(row);
+    var x = getCoordinate(col);
+    var $moveable = $("<div id='" + id + "_start' style='position: absolute;'></div>");
+
+    if (id.indexOf('ball') >= 0)
     {
-        var y = getCoordinate(row);
-        var x = getCoordinate(col);
-        var $img = $('#' + id + '_master').clone();
-        $img.css({left: x, top: y}).attr({class: 'playerStartingPoint', id: id + '_start'}).zIndex(1000);
-        $img.show();
-        $img.appendTo($(moveableID));
+        $moveable.css({backgroundImage: "url(/assets/ball.png)"}).zIndex(1000);
     }
-    else if ($(moveableID).has("img.ballStartingPoint").length == 0)
+    else
     {
-        var y = getCoordinate(row);
-        var x = getCoordinate(col);
-        var $img = $('#' + id + '_master').clone();
-        $img.css({left: x, top: y}).attr({class: 'ballStartingPoint', id: id + '_start'}).zIndex(1000);
-        $img.show();
-        $img.appendTo($(moveableID));
+        $moveable.css({backgroundImage: "url(/assets/running_sprite.png)"}).zIndex(1000);
     }
+    $moveable.css({height: 50, width: 50, left: x, top: y}).zIndex(1000);
+    $moveable.appendTo($(moveableID));
 }
 
 function getMoveableID(row, col)
@@ -201,7 +406,8 @@ function runFaceoff()
             flickBallOut();
             var containerOffset = $(".fieldContainer").offset();
             var position = $('#ball').position();
-            $('#fo_2').css({
+
+            $('#fo_2').animate({
                 left: position.left,
                 top: position.top
             });
@@ -239,10 +445,8 @@ function flickBallOut()
         row = 7 + Math.floor(Math.random() * 3);
         col = 2 + Math.floor(Math.random() * 6);
     }
-
-    $('#ball').css('left', getCoordinate(col) + "px");
-    $('#ball').css('top', getCoordinate(row) + "px");
     currentMove++;
+    $('#ball').animate({left: getCoordinate(col) + "px", top: getCoordinate(row) + "px"});
 }
 
 function runPlay()
@@ -275,11 +479,10 @@ function animateThisMovesPlay()
     {
         if (moves[i][0] == currentMove)
         {
-            var moveFrom = getIDCoordinatesByMove(moves[i][1], previousMove());
             var moveTo = getIDCoordinatesByMove(moves[i][1], currentMove);
-            $('#' +  moves[i][1] + '_start').css({top: getCoordinate(moveTo[0]), left: getCoordinate(moveTo[1])});
+            $('#' +  moves[i][1] + '_start').animate({top: getCoordinate(moveTo[0]), left: getCoordinate(moveTo[1])});
             var id = moves[i][1];
-            $('#' +  moves[i][1] + '_start').one("transitionend webkitTransitionEnd oTransitionEnd MSTransitionEnd", function()
+            $('#' +  moves[i][1] + '_start').promise().done(function()
             {
                 var id = $(this).attr('id').substring(0, $(this).attr('id').indexOf('_start'));
                 $('#' + id).css('opacity', 1);

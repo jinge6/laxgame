@@ -1,31 +1,43 @@
-<div>
-  <img id="moveToSpot" hidden="true" src="<%= image_url('moveoption.png') %>">
-  <img id="a1_master" hidden="true" src="<%= image_url("a1.png") %>">
-  <img id="d1_2_master" hidden="true" src="<%= image_url("d1_2.png") %>">
-  <img id="fo_master" hidden="true" src="<%= image_url("fo.png") %>">
-  <img id="fo_2_master" hidden="true" src="<%= image_url("fo_2.png") %>">
-  <img id="ball_master" hidden="true" src="<%= image_url("ball.png") %>">
+<div id="laxGame">
+  <img id="startButton" src="/assets/fo.png" />
 </div>
-<div id="status"></div>
-<table>
-  <tbody>
-  <tr valign="top">
-    <td>Trash Talk Panel</td>
-    <td width="400"><div class="fieldContainer"></div></td>
-    <td><div id="clock" class="jumbo"></div></td>
-  </tr>
-  </tbody>
-</table>
 <div><%= link_to 'Back', games_path %></div>
 
 <script>
   $(document).ready(function ()
   {
-    initialiseRowsAndColumns();
-    initialiseMoveables();
+    var initialize = function()
+    {
+      var fieldBackgroundAnim = new gf.animation({url: "/assets/laxfield.jpg", width: 400, height: 800});
 
-    var $players = $(".player");
-    $players.draggable({containment: 'fieldContainer', revert: "invalid"});
+      $('#laxGame').append("<div id='container' style='width: 400px; height: 800px;'>");
+      container = $("#container");
+      field = gf.addGroup(container, "fieldContainer");
+      fieldBackground = gf.addSprite(field, "fieldBackground", {width: 400, height: 800});
+      gf.setAnimation(fieldBackground, fieldBackgroundAnim);
+
+      var player1Anim = new gf.animation({url: "/assets/running_sprite.png", numberOfFrames: 3, rate: 100});
+      player1 = gf.addSprite(field, "player1");
+      gf.setAnimation(player1, player1Anim, true);
+
+      $("#startButton").remove();
+      container.css("display", "block");
+
+    }
+
+    var gameLoop = function() {
+
+    }
+
+    gf.addCallback(gameLoop, 30);
+
+    $("#startButton").click(function() {
+      gf.startGame(initialize);
+    });
+
+    /*
+    var $movables = $(".moveable");
+    $movables.draggable({containment: 'fieldContainer', revert: "invalid"});
     $dropContainer = $(".fieldContainer");
 
     $dropContainer.droppable({
@@ -55,11 +67,10 @@
 
       $('.moveOption').fadeOut(200);
       $('.moveOption').promise().done(function (){$('.moveOption').remove()});
-      $("#" + id).remove();
+      //clearInterval()
       addMoveable(currentMove, id, row, col);
     }
-
-    gameLoop();
+    */
   });
 
 </script>
