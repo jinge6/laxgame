@@ -1,115 +1,44 @@
-gf = {
+var moves = [];
+var currentMove = 0;
+var moveablesSize = 50;
 
-    baseRate: 100,
-    animations: [],
-    moves: [],
-    currentMove: 0,
-    gameState: "FACE_OFF"
-
-};
-
-gf.imagesToPreload = [];
-
-gf.initialise = function(options)
+function initialiseRowsAndColumns()
 {
-    $.extend(gf, options);
-}
-
-gf.startGame = function(endCallback, progressCallback) {
-    var images = [];
-    var total = gf.imagesToPreload.length;
-
-    for (var i = 0; i < total; i++) {
-        var image = new Image();
-        images.push(image);
-        image.src = gf.imagesToPreload[i];
-    }
-    var preloadingPoller = setInterval(function() {
-        var counter = 0;
-        var total = gf.imagesToPreload.length;
-        for (var i = 0; i < total; i++) {
-            if (images[i].complete) {
-                counter++;
-            }
-        }
-        if (counter == total) {
-            //we are done!
-            clearInterval(preloadingPoller);
-            endCallback();
-            setInterval(gf.refreshGame, gf.baseRate);
-            gf.time = (new Date()).getTime();
-        } else {
-            if (progressCallback) {
-                counter++;
-                progressCallback((counter / total) * 100);
-            }
-        }
-    }, 100);
-};
-
-gf.preload = function ()
-{
-    gf.initialiseRowsAndColumns();
-    gf.initialiseMoveables();
-}
-
-gf.addImage = function(url)
-{
-    if ($.inArray(url, gf.imagesToPreload) < 0)
+    for(var i = 0; i <= 7; i++)
     {
-        gf.imagesToPreload.push(url);
-    }
-}
-
-gf.animation = function(options)
-{
-    var defaultValues = {
-        url: false,
-        width: 50,
-        height: 50,
-        numberOfFrames: 1,
-        currentFrame: 0,
-        offset: 0,
-        rate: 1
-    }
-    $.extend(this, defaultValues, options);
-    if (options.rate)
-    {
-        this.rate = Math.round(this.rate/gf.baseRate);
-    }
-    if (this.url)
-    {
-        gf.addImage(this.url);
-    }
-}
-
-gf.setFrame = function(div, animation) {
-    div.css("backgroundPosition", "-" + (animation.currentFrame * animation.width + animation.offset) + "px 0px");
-}
-
-gf.animations = [];
-
-gf.initialiseRowsAndColumns = function ()
-{
-    for(var i = 0; i <= 15; i++)
-    {
-        for (var j = 0; j <= 7; j++)
+        for (var j = 0; j <= 15; j++)
         {
             var x, y;
-            if (j % 7 == 1)
+            if (j % 15 == 1)
                 x = 0;
-            if (j % 7 == 2)
+            if (j % 15 == 2)
                 x = getCoordinate(1);
-            if (j % 7 == 3)
+            if (j % 15 == 3)
                 x = getCoordinate(2);
-            if (j % 7 == 4)
+            if (j % 15 == 4)
                 x = getCoordinate(3);
-            if (j % 7 == 5)
+            if (j % 15 == 5)
                 x = getCoordinate(4);
-            if (j % 7 == 6)
+            if (j % 15 == 6)
                 x = getCoordinate(5);
-            if (j % 7 == 7)
+            if (j % 15 == 7)
                 x = getCoordinate(6);
+            if (j % 15 == 8)
+                x = getCoordinate(7);
+            if (j % 15 == 9)
+                x = getCoordinate(8);
+            if (j % 15 == 10)
+                x = getCoordinate(9);
+            if (j % 15 == 11)
+                x = getCoordinate(10);
+            if (j % 15 == 12)
+                x = getCoordinate(11);
+            if (j % 15 == 13)
+                x = getCoordinate(12);
+            if (j % 15 == 14)
+                x = getCoordinate(13);
+            if (j % 15 == 0)
+                x = getCoordinate(14);
 
             y = getCoordinate(i);
             $('.fieldContainer').append("<div class='rowCol' id='" + i + '_' + j +"'></div>");
@@ -117,194 +46,16 @@ gf.initialiseRowsAndColumns = function ()
     }
 }
 
-gf.refreshGame = function (){
-
-    // update animations
-    var finishedAnimations = [];
-
-    for (var i=0; i < gf.animations.length; i++) {
-
-        var animate = gf.animations[i];
-
-        animate.counter++;
-        if (animate.counter == animate.animation.rate) {
-            animate.counter = 0;
-            animate.animation.currentFrame++;
-            if(!animate.loop && animate.animation.currentFrame > animate.animation.numberOfFrames){
-                finishedAnimations.push(i);
-            } else {
-                animate.animation.currentFrame %= animate.animation.numberOfFrames;
-                gf.setFrame(animate.div, animate.animation);
-            }
-        }
-    }
-    for(var i=0; i < finishedAnimations.length; i++){
-        gf.animations.splice(finishedAnimations[i], 1);
-    }
-
-    // execute the callbacks
-    for (var i=0; i < gf.callbacks.length; i++) {
-        var call  = gf.callbacks[i];
-
-        call.counter++;
-        if (call.counter == call.rate) {
-            var currentTime = (new Date()).getTime();
-            call.counter = 0;
-            call.callback(currentTime - gf.time);
-        }
-    }
-    gf.time = (new Date()).getTime();
-}
-
-gf.setAnimation = function(div, animation, loop)
+function addPlayer(container, move, id, row, col)
 {
-    var animate = {
-        animation: $.extend({}, animation),
-        div: div,
-        loop: loop,
-        counter: 0
-    };
-    if (animation.url)
-    {
-        div.css("backgroundImage", "url("+animation.url+")");
-    }
-    // search if this div already has an animation
-    var divFound = false;
-    for (var i=0; i<gf.animations.length; i++)
-    {
-        if (gf.animations[i].div == div)
-        {
-            divFound = true;
-            gf.animations[i] = animate;
-        }
-    }
-    if (!divFound)
-    {
-        gf.animations.push(animate);
-    }
-}
-
-gf.callbacks = [];
-
-gf.addCallback = function(callback, rate)
-{
-    gf.callbacks.push({
-        callback: callback,
-        rate: Math.round(rate/gf.baseRate),
-        counter: 0
-    });
-}
-
-gf.previousMove = function()
-{
-    return gf.currentMove==0?0:gf.currentMove - 1;
-}
-
-gf.addSprite = function(parent, divId, options)
-{
-    var options = $.extend({
-        x: 0,
-        y: 0,
-        row: 0,
-        col: 0,
-        width: 50,
-        height: 50,
-        rotate: 0,
-        move: gf.currentMove
-    }, options);
-    var sprite = gf.spriteFragment.clone().css({x: options.x, y: options.y, width: options.width, height: options.height}).attr('id', divId).data("gf", options);
-    parent.append(sprite);
-    return sprite;
-}
-
-gf.transform = function(div, options)
-{
-    var gf = div.data("gf");
-    if (options.rotate !== undefined)
-    {
-        gf.rotate = options.rotate;
-    }
-    div.css("transform", "rotate(" + gf.rotate + "deg)");
-}
-
-gf.spriteFragment = $("<div style='position: absolute; overflow: hidden;' class='gf_sprite'></div>");
-gf.groupFragment = $("<div style='position: absolute; overflow: visible;' class='gf_group'></div>");
-
-gf.addGroup = function(parent, divId, options)
-{
-    var options = $.extend({
-        x: 0,
-        y: 0,
-    }, options);
-    var group = gf.groupFragment.clone().css({left: options.x, top: options.y}).attr('id', divId).data("gf", options);
-    parent.append(group);
-    return group;
-}
-
-gf.x = function(divId, position)
-{
-    if(position)
-    {
-        $('#'+divId).css('left',position);
-        $('#'+divId).data("gf").x = position;
-    }
-    else
-    {
-        return $("#"+divId).data("gf").x;
-    }
-}
-
-gf.y = function(divId, position)
-{
-    if(position)
-    {
-        $('#'+divId).css('top',position);
-        $('#'+divId).data("gf").y = position;
-    }
-    else
-    {
-        return $("#"+divId).data("gf").y;
-    }
-}
-
-function addMoveable(move, id, row, col)
-{
-    var moveableID = getMoveableID(row, col);
-
     var y = getCoordinate(row);
     var x = getCoordinate(col);
-    $(moveableID).append("<div id='" + id + "' style='position: absolute;' class='moveable'></div>")
-    if (id.indexOf('ball') >= 0)
-    {
-        $('#' + id).css({height: 50, width: 50, backgroundImage: "url(/assets/ball.png)"});
-    }
-    else
-    {
-        $('#' + id).css({height: 50, width: 50, backgroundImage: "url(/assets/running_sprite.png)"});
-    }
-    $('#' + id).css({left: x, top: y});
 
+    var player = gf.addSprite(container, id, {x:x, y:y});
 
-
-    if (gameState == "PLAY")
-    {
-        $('#' + id).css({opacity: 0.2});
-        addMoveableStartingPointBack(id);
-    }
     saveMove(move, id, row, col);
-
-    var $movables = $(".moveable");
-    $movables.draggable({containment: '.fieldContainer', revert: "invalid"});
-}
-
-function animate(id)
-{
-    var totalNumberFrames = 3;
-    var frameNumber = 0;
-    setInterval(function(){
-        $('#' + id).css("backgroundPosition", "" +  frameNumber * moveablesSize + "px 0px");
-        frameNumber = (frameNumber + 1) % totalNumberFrames;
-    }, 100);
+    addMoveableStartingPointBack(player, previousMove());
+    return player
 }
 
 function saveMove(move, id, row, col)
@@ -321,38 +72,41 @@ function saveMove(move, id, row, col)
             break;
         }
     }
-    if (found == false && currentMove > 1)
+    if (found == false)
     {
-        console.log('add ' +  id + ' to ' + move, row, col);
         moves.push([move,id, row, col]);
     }
 }
 
-function addMoveableStartingPointBack(id)
+function addMoveableStartingPointBack(div, startingMove)
 {
-    var row = getMovesOriginalRowOrColumn(id, "row");
-    var col = getMovesOriginalRowOrColumn(id, "col");
-    console.log(id + ' original ', row, col);
-    var moveableID = getMoveableID(row, col);
+    var row = getMovesRowOrColumn(div, startingMove, "row");
+    var col = getMovesRowOrColumn(div, startingMove, "col");
+
     var y = getCoordinate(row);
     var x = getCoordinate(col);
-    var $moveable = $("<div id='" + id + "_start' style='position: absolute;'></div>");
+    var $moveable = $("<div id='" + div.attr('id') + "_start' style='position: absolute;'></div>");
 
-    if (id.indexOf('ball') >= 0)
+    if (div.attr('id').indexOf('ball') >= 0)
     {
         $moveable.css({backgroundImage: "url(/assets/ball.png)"}).zIndex(1000);
     }
     else
     {
-        $moveable.css({backgroundImage: "url(/assets/running_sprite.png)"}).zIndex(1000);
+        $moveable.css({backgroundImage: "url(/assets/standing_sprite.png)"}).zIndex(1000);
     }
     $moveable.css({height: 50, width: 50, left: x, top: y}).zIndex(1000);
-    $moveable.appendTo($(moveableID));
+    $moveable.appendTo(div.parent());
 }
 
-function getMoveableID(row, col)
+function previousMove()
 {
-    return '#'+ row + '_' +  col;
+    return currentMove==0?0:currentMove-1;
+}
+
+function nextMove()
+{
+    return currentMove+1;
 }
 
 function getCoordinate(rowOrCol)
@@ -363,35 +117,6 @@ function getCoordinate(rowOrCol)
 function getCountDownDate(millisecs) {
     selectedDate = new Date().valueOf() + millisecs;
     return selectedDate.toString()
-}
-
-function gameLoop()
-{
-    $('#clock').unbind();
-    $('.playerStartingPoint').remove();
-    switch (gameState)
-    {
-        case "START":
-            break;
-        case "FACE_OFF":
-            runFaceoff();
-            break;
-        case "PLAY":
-            runPlay();
-            break;
-        case "WAITING":
-            break;
-        case "CAN_SHOOT":
-            break;
-        case "SHOOT":
-            break;
-        case "GOALIE_SAVE":
-            break;
-        case "WON":
-            break;
-        case "FINISHED":
-            break;
-    }
 }
 
 function runFaceoff()
@@ -537,13 +262,14 @@ function getMovesOriginalCoord(id, xOrY)
     return coord;
 }
 
-function getMovesOriginalRowOrColumn(id, rowOrColumn)
+function getMovesRowOrColumn(div, constrainFromMove, rowOrColumn)
 {
     var rowOrCol = 0;
+    var id = div.id;
 
     for (var i=moves.length-1; i>=0; i--)
     {
-        if (moves[i][0] < currentMove && moves[i][1] == id)
+        if (moves[i][0] == constrainFromMove && moves[i][1] == id)
         {
             if (rowOrColumn == "row")
             {
@@ -597,12 +323,12 @@ function getIDCoordinatesByMove(id, move)
     return [rowCoord, colCoord];
 }
 
-function getContainmentCoords(id)
+function getContainmentCoords(div, constrainFromMove)
 {
-    var row = getMovesOriginalRowOrColumn(id, "row");
-    var col = getMovesOriginalRowOrColumn(id, "col");
+    var row = getMovesRowOrColumn(div, constrainFromMove, "row");
+    var col = getMovesRowOrColumn(div, constrainFromMove, "col");
 
-    var containerOffset = $(".fieldContainer").offset();
+    var containerOffset = $("#"+div.parentElement.id).offset();
     var startRow = row - 2;
     var stopRow = row + 2;
     var startCol = col - 2;
@@ -633,18 +359,18 @@ function getContainmentCoords(id)
     return [x1, y1, x2 ,y2]
 }
 
-function setContainment(id)
+function setContainment(div, constrainFromMove)
 {
-    addVisualMoveOptions(id);
-    addContainmentToMoveable(id);
+    addVisualMoveOptions(div, constrainFromMove);
+    addContainmentToMoveable(div, constrainFromMove);
 }
 
-function addContainmentToMoveable(id)
+function addContainmentToMoveable(div, constrainFromMove)
 {
-    var containmentCoords = getContainmentCoords(id);
+    var containmentCoords = getContainmentCoords(div, constrainFromMove);
 
-    $("#" + id).draggable("option", "containment", containmentCoords);
-    $("#" + id).data('uiDraggable')._setContainment();
+    $("#" + div.id).draggable("option", "containment", containmentCoords);
+    $("#" + div.id).data('uiDraggable')._setContainment();
 }
 
 function calculateRoundedGridCoordinate(coord)
@@ -657,12 +383,11 @@ function calculateRowOrColumnCoordinate(coord)
     return Math.round((coord / moveablesSize),0)
 }
 
-function addVisualMoveOptions(id)
+function addVisualMoveOptions(div, constrainFromMove)
 {
-    var row = getMovesOriginalRowOrColumn(id, "row");
-    var col = getMovesOriginalRowOrColumn(id, "col");
+    var row = getMovesRowOrColumn(div, constrainFromMove, "row");
+    var col = getMovesRowOrColumn(div, constrainFromMove, "col");
 
-    var moveableID = getMoveableID(row, col);
     var startRow = row - 2;
     var stopRow = row + 2;
     var startCol = col - 2;
@@ -690,7 +415,7 @@ function addVisualMoveOptions(id)
         {
             var $moveOption = $('#moveToSpot').clone();
             $moveOption.css({left: getCoordinate(j), top: getCoordinate(i), opacity: 1}).attr('class', 'moveOption');
-            $(moveableID).append($moveOption);
+            $("#" + div.parentNode.id).append($moveOption);
         }
     }
 }

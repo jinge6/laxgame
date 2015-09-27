@@ -1,5 +1,9 @@
+<img id="moveToSpot" hidden="true" src="<%= image_url('moveoption.png') %>">
 <div id="laxGame">
   <img id="startButton" src="/assets/fo.png" />
+</div>
+<div>
+  <button id="draggableButton">Drag Player</button>
 </div>
 <div><%= link_to 'Back', games_path %></div>
 
@@ -8,25 +12,68 @@
   {
     var initialize = function()
     {
-      var fieldBackgroundAnim = new gf.animation({url: "/assets/laxfield.jpg", width: 400, height: 800});
+      var fieldBackgroundAnim = new gf.animation({url: "/assets/laxfield.jpg", width: 800, height: 400});
 
-      $('#laxGame').append("<div id='container' style='width: 400px; height: 800px;'>");
+      $('#laxGame').append("<div id='container' style='width: 800px; height: 400px;'>");
       container = $("#container");
-      field = gf.addGroup(container, "fieldContainer");
-      fieldBackground = gf.addSprite(field, "fieldBackground", {width: 400, height: 800});
+      field = gf.addGroup(container, "fieldContainer", {width: 800, height: 400});
+
+      fieldBackground = gf.addSprite(field, "fieldBackground", {width: 800, height: 400});
       gf.setAnimation(fieldBackground, fieldBackgroundAnim);
 
-      var player1Anim = new gf.animation({url: "/assets/running_sprite.png", numberOfFrames: 3, rate: 100});
-      player1 = gf.addSprite(field, "player1");
-      gf.setAnimation(player1, player1Anim, true);
+      player.div = addPlayer(field, currentMove, "player", 3, 3);
+      gf.setAnimation(player.div, playerAnim.stand);
 
       $("#startButton").remove();
       container.css("display", "block");
-
     }
 
-    var gameLoop = function() {
+    var playerAnim = {
+      stand: new gf.animation({
+        url: "/assets/standing_sprite.png"
+      }),
+      moveable: new gf.animation({
+        url: "/assets/standing_sprite.png"
+      }),
+      run:  new gf.animation({
+        url:    "/assets/running_sprite.png",
+        numberOfFrames: 3,
+        rate: 100
+      })
+    };
 
+    var player = new (function(){
+      var status = "stand";
+
+      this.update = function () {
+
+      };
+
+      this.idle  = function (){
+        switch (status) {
+          case "stand":
+            status = "stand";
+            gf.setAnimation(this.div, playerAnim.stand);
+            break;
+          case "moveable":
+            status = "moveable";
+            gf.setDraggable(this.div);
+            gf.setAnimation(this.div, playerAnim.stand);
+            break;
+          case "run":
+            status = "run";
+            gf.setAnimation(this.div, playerAnim.run, true);
+            break;
+        }
+      };
+    });
+
+    var gameLoop = function() {
+      var idle = true;
+      if(idle)
+      {
+        player.idle();
+      }
     }
 
     gf.addCallback(gameLoop, 30);
@@ -35,42 +82,52 @@
       gf.startGame(initialize);
     });
 
-    /*
-    var $movables = $(".moveable");
-    $movables.draggable({containment: 'fieldContainer', revert: "invalid"});
-    $dropContainer = $(".fieldContainer");
-
-    $dropContainer.droppable({
-      accept: ".moveable",
-      activate: dragStarted,
-      drop: dragDrop
+    $("#draggableButton").click(function() {
+      setDraggable($("#player"));
     });
+
+    function setDraggable(div, containmentCoords)
+    {
+      div.css( 'cursor', 'move' );
+      div.draggable({containment: 'gf_group', revert: "invalid"});
+      div.parent().droppable({
+        accept: ".gf_sprite",
+        activate: dragStarted,
+        drop: dragDrop
+      });
+      /*
+      $("#" + div.attr('id')).draggable();
+      $("#" + div.attr('id')).css( 'cursor', 'move' );
+      if (containmentCoords != null && containmentCoords.length == 4) {
+        $("#" + div.attr('id')).draggable("option", "containment", containmentCoords);
+        $("#" + div.attr('id')).data('uiDraggable')._setContainment();
+      }
+      */
+    }
 
     function dragStarted(e, ui)
     {
       if (ui.draggable[0].id.indexOf("ball") == -1)
       {
-        setContainment(ui.draggable[0].id);
+        setContainment(ui.draggable[0], previousMove());
         $('.moveOption').fadeIn(200);
       }
     }
-
     function dragDrop(e,ui)
     {
       var id = ui.draggable[0].id;
       var xPos = parseInt(ui.draggable[0].style["left"].replace("px", ""));
       var yPos = parseInt(ui.draggable[0].style["top"].replace("px", ""));
-      var newXPos = calculateRoundedGridCoordinate(xPos);
-      var newYPos = calculateRoundedGridCoordinate(yPos);
-      var col = calculateRowOrColumnCoordinate(newXPos);
-      var row = calculateRowOrColumnCoordinate(newYPos);
-
+      var newXPos = Math.round(xPos / moveablesSize) * moveablesSize;
+      var newYPos = Math.round(yPos / moveablesSize) * moveablesSize;
+      var col = (newXPos / moveablesSize);
+      var row = (newYPos / moveablesSize);
       $('.moveOption').fadeOut(200);
       $('.moveOption').promise().done(function (){$('.moveOption').remove()});
-      //clearInterval()
-      addMoveable(currentMove, id, row, col);
+      $("#" + id).remove();
+      addPlayer($("#"+id).parent(), nextMove(), id, row, col);
     }
-    */
+
   });
 
 </script>
