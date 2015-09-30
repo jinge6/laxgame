@@ -23,48 +23,6 @@
   position: absolute;
 }
 
-.playerStartingPoint {
-  -webkit-transition-timing-function: ease-in-out;
-  -moz-transition-timing-function: ease-in-out;
-  -ms-transition-timing-function: ease-in-out;
-  transition-timing-function: ease-in-out;
-  -webkit-transition-duration: 1.0s;
-  -moz-transition-duration: 1.0s;
-  -ms-transition-duration: 1.0s;
-  transition-duration: 1.0s;
-  z-index: 1500;
-  vertical-align:bottom;
-  position: absolute;
-}
-
-.ballStartingPoint {
-  -webkit-transition-timing-function: ease-in-out;
-  -moz-transition-timing-function: ease-in-out;
-  -ms-transition-timing-function: ease-in-out;
-  transition-timing-function: ease-in-out;
-  -webkit-transition-duration: 1.0s;
-  -moz-transition-duration: 1.0s;
-  -ms-transition-duration: 1.0s;
-  transition-duration: 1.0s;
-  z-index: 1500;
-  vertical-align:bottom;
-  position: absolute;
-}
-
-.ball {
-  -webkit-transition-timing-function: ease-in-out;
-  -moz-transition-timing-function: ease-in-out;
-  -ms-transition-timing-function: ease-in-out;
-  transition-timing-function: ease-in-out;
-  -webkit-transition-duration: 1.0s;
-  -moz-transition-duration: 1.0s;
-  -ms-transition-duration: 1.0s;
-  transition-duration: 1.0s;
-  z-index: 1600;
-  vertical-align:bottom;
-  position: absolute;
-}
-
 .ui-draggable-dragging {
   -webkit-transition:none !important;
   -moz-transition:none !important;

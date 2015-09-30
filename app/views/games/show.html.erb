@@ -3,7 +3,8 @@
   <img id="startButton" src="/assets/fo.png" />
 </div>
 <div>
-  <button id="draggableButton">Drag Player</button>
+  <button id="draggableButton">Drag Player</button>&nbsp;
+  <button id="runButton">Run Dude, Run</button>
 </div>
 <div><%= link_to 'Back', games_path %></div>
 
@@ -83,10 +84,22 @@
     });
 
     $("#draggableButton").click(function() {
+      currentMove++;
       setDraggable($("#player"));
     });
 
-    function setDraggable(div, containmentCoords)
+    $("#runButton").click(function()
+    {
+      for (var i = 0; i < moves.length; i++)
+      {
+        if (moves[i][0] == currentMove)
+        {
+          gf.spriteMove($('#' + moves[i][1] + '_start'), playerAnim.run, playerAnim.stand, {y:getCoordinate(moves[i][2]), x:getCoordinate(moves[i][3]), removeWhenDone: true, div: moves[i][1]});
+        }
+      }
+    });
+
+    function setDraggable(div)
     {
       div.css( 'cursor', 'move' );
       div.draggable({containment: 'gf_group', revert: "invalid"});
@@ -95,27 +108,20 @@
         activate: dragStarted,
         drop: dragDrop
       });
-      /*
-      $("#" + div.attr('id')).draggable();
-      $("#" + div.attr('id')).css( 'cursor', 'move' );
-      if (containmentCoords != null && containmentCoords.length == 4) {
-        $("#" + div.attr('id')).draggable("option", "containment", containmentCoords);
-        $("#" + div.attr('id')).data('uiDraggable')._setContainment();
-      }
-      */
     }
 
     function dragStarted(e, ui)
     {
       if (ui.draggable[0].id.indexOf("ball") == -1)
       {
-        setContainment(ui.draggable[0], previousMove());
+        setContainment(ui.draggable[0].id, previousMove());
         $('.moveOption').fadeIn(200);
       }
     }
     function dragDrop(e,ui)
     {
       var id = ui.draggable[0].id;
+      $("#" + id).attr('class', 'remove');
       var xPos = parseInt(ui.draggable[0].style["left"].replace("px", ""));
       var yPos = parseInt(ui.draggable[0].style["top"].replace("px", ""));
       var newXPos = Math.round(xPos / moveablesSize) * moveablesSize;
@@ -124,8 +130,14 @@
       var row = (newYPos / moveablesSize);
       $('.moveOption').fadeOut(200);
       $('.moveOption').promise().done(function (){$('.moveOption').remove()});
-      $("#" + id).remove();
-      addPlayer($("#"+id).parent(), nextMove(), id, row, col);
+
+      // add the move player back
+      var player = addPlayer($("#"+id).parent(), currentMove, id, row, col);
+      gf.setAnimation(player, playerAnim.stand);
+      player.css({opacity: 0.3});
+      addMoveableStartingPointBack(id, previousMove());
+      $(".remove").remove();
+      setDraggable($("#"+id));
     }
 
   });

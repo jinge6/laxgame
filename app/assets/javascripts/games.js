@@ -2,59 +2,14 @@ var moves = [];
 var currentMove = 0;
 var moveablesSize = 50;
 
-function initialiseRowsAndColumns()
-{
-    for(var i = 0; i <= 7; i++)
-    {
-        for (var j = 0; j <= 15; j++)
-        {
-            var x, y;
-            if (j % 15 == 1)
-                x = 0;
-            if (j % 15 == 2)
-                x = getCoordinate(1);
-            if (j % 15 == 3)
-                x = getCoordinate(2);
-            if (j % 15 == 4)
-                x = getCoordinate(3);
-            if (j % 15 == 5)
-                x = getCoordinate(4);
-            if (j % 15 == 6)
-                x = getCoordinate(5);
-            if (j % 15 == 7)
-                x = getCoordinate(6);
-            if (j % 15 == 8)
-                x = getCoordinate(7);
-            if (j % 15 == 9)
-                x = getCoordinate(8);
-            if (j % 15 == 10)
-                x = getCoordinate(9);
-            if (j % 15 == 11)
-                x = getCoordinate(10);
-            if (j % 15 == 12)
-                x = getCoordinate(11);
-            if (j % 15 == 13)
-                x = getCoordinate(12);
-            if (j % 15 == 14)
-                x = getCoordinate(13);
-            if (j % 15 == 0)
-                x = getCoordinate(14);
-
-            y = getCoordinate(i);
-            $('.fieldContainer').append("<div class='rowCol' id='" + i + '_' + j +"'></div>");
-        }
-    }
-}
-
 function addPlayer(container, move, id, row, col)
 {
     var y = getCoordinate(row);
     var x = getCoordinate(col);
 
     var player = gf.addSprite(container, id, {x:x, y:y});
-
     saveMove(move, id, row, col);
-    addMoveableStartingPointBack(player, previousMove());
+
     return player
 }
 
@@ -78,25 +33,26 @@ function saveMove(move, id, row, col)
     }
 }
 
-function addMoveableStartingPointBack(div, startingMove)
+function addMoveableStartingPointBack(id, startingMove)
 {
-    var row = getMovesRowOrColumn(div, startingMove, "row");
-    var col = getMovesRowOrColumn(div, startingMove, "col");
+
+    var row = getMovesRowOrColumn(id, startingMove, "row");
+    var col = getMovesRowOrColumn(id, startingMove, "col");
 
     var y = getCoordinate(row);
     var x = getCoordinate(col);
-    var $moveable = $("<div id='" + div.attr('id') + "_start' style='position: absolute;'></div>");
+    var $moveable = $("<div id='" + id + "_start' style='position: absolute;'></div>");
 
-    if (div.attr('id').indexOf('ball') >= 0)
+    if (id.indexOf('ball') >= 0)
     {
-        $moveable.css({backgroundImage: "url(/assets/ball.png)"}).zIndex(1000);
+        $moveable.css({backgroundImage: "url(/assets/ball.png)"});
     }
     else
     {
-        $moveable.css({backgroundImage: "url(/assets/standing_sprite.png)"}).zIndex(1000);
+        $moveable.css({backgroundImage: "url(/assets/standing_sprite.png)"});
     }
     $moveable.css({height: 50, width: 50, left: x, top: y}).zIndex(1000);
-    $moveable.appendTo(div.parent());
+    $moveable.appendTo($("#"+id).parent());
 }
 
 function previousMove()
@@ -262,10 +218,9 @@ function getMovesOriginalCoord(id, xOrY)
     return coord;
 }
 
-function getMovesRowOrColumn(div, constrainFromMove, rowOrColumn)
+function getMovesRowOrColumn(id, constrainFromMove, rowOrColumn)
 {
     var rowOrCol = 0;
-    var id = div.id;
 
     for (var i=moves.length-1; i>=0; i--)
     {
@@ -323,12 +278,12 @@ function getIDCoordinatesByMove(id, move)
     return [rowCoord, colCoord];
 }
 
-function getContainmentCoords(div, constrainFromMove)
+function getContainmentCoords(id, constrainFromMove)
 {
-    var row = getMovesRowOrColumn(div, constrainFromMove, "row");
-    var col = getMovesRowOrColumn(div, constrainFromMove, "col");
+    var row = getMovesRowOrColumn(id, constrainFromMove, "row");
+    var col = getMovesRowOrColumn(id, constrainFromMove, "col");
 
-    var containerOffset = $("#"+div.parentElement.id).offset();
+    var containerOffset = $("#"+id).parent().offset();
     var startRow = row - 2;
     var stopRow = row + 2;
     var startCol = col - 2;
@@ -359,18 +314,18 @@ function getContainmentCoords(div, constrainFromMove)
     return [x1, y1, x2 ,y2]
 }
 
-function setContainment(div, constrainFromMove)
+function setContainment(id, constrainFromMove)
 {
-    addVisualMoveOptions(div, constrainFromMove);
-    addContainmentToMoveable(div, constrainFromMove);
+    addVisualMoveOptions(id, constrainFromMove);
+    addContainmentToMoveable(id, constrainFromMove);
 }
 
-function addContainmentToMoveable(div, constrainFromMove)
+function addContainmentToMoveable(id, constrainFromMove)
 {
-    var containmentCoords = getContainmentCoords(div, constrainFromMove);
+    var containmentCoords = getContainmentCoords(id, constrainFromMove);
 
-    $("#" + div.id).draggable("option", "containment", containmentCoords);
-    $("#" + div.id).data('uiDraggable')._setContainment();
+    $("#" + id).draggable("option", "containment", containmentCoords);
+    $("#" + id).data('uiDraggable')._setContainment();
 }
 
 function calculateRoundedGridCoordinate(coord)
@@ -383,10 +338,10 @@ function calculateRowOrColumnCoordinate(coord)
     return Math.round((coord / moveablesSize),0)
 }
 
-function addVisualMoveOptions(div, constrainFromMove)
+function addVisualMoveOptions(id, constrainFromMove)
 {
-    var row = getMovesRowOrColumn(div, constrainFromMove, "row");
-    var col = getMovesRowOrColumn(div, constrainFromMove, "col");
+    var row = getMovesRowOrColumn(id, constrainFromMove, "row");
+    var col = getMovesRowOrColumn(id, constrainFromMove, "col");
 
     var startRow = row - 2;
     var stopRow = row + 2;
@@ -415,7 +370,7 @@ function addVisualMoveOptions(div, constrainFromMove)
         {
             var $moveOption = $('#moveToSpot').clone();
             $moveOption.css({left: getCoordinate(j), top: getCoordinate(i), opacity: 1}).attr('class', 'moveOption');
-            $("#" + div.parentNode.id).append($moveOption);
+            $("#" + id).parent().append($moveOption);
         }
     }
 }

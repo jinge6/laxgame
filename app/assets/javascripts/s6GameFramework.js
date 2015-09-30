@@ -186,14 +186,25 @@ gf.addSprite = function(parent, divId, options)
 
 gf.transform = function(div, options){
     var gf = div.data("gf");
-    if (options.rotate !== undefined)
-    {
+    if(options.flipH !== undefined){
+        gf.flipH = options.flipH;
+    }
+    if(options.flipV !== undefined){
+        gf.flipV = options.flipV;
+    }
+    if(options.rotate !== undefined){
         gf.rotate = options.rotate;
     }
-    div.css("transform", "rotate(" + gf.rotate + "deg)");
+
+    (options.scale !== undefined) ? gf.scale = options.scale : gf.scale = 1;
+
+    var factorH = gf.flipH ? -1 : 1;
+    var factorV = gf.flipV ? -1 : 1;
+
+    div.css("transform", "rotate("+gf.rotate+"deg) scale("+(gf.scale*factorH)+","+(gf.scale*factorV)+")");
 }
 
-gf.spriteMove = function(div, options, startAnim, endAnim){
+gf.spriteMove = function(div, startAnim, endAnim, options){
     gf.setAnimation(div, startAnim, true);
     var options = $.extend({
         duration: 1000
@@ -210,6 +221,11 @@ gf.spriteMove = function(div, options, startAnim, endAnim){
         },
         complete: function() {
             gf.setAnimation(div, endAnim);
+            if (options.removeWhenDone)
+            {
+                $('#' + options.div).css('opacity', 1);
+                div.remove();
+            }
         }
     });
 }
