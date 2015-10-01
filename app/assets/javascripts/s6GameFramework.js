@@ -176,7 +176,10 @@ gf.addSprite = function(parent, divId, options)
         col: 0,
         width: 50,
         height: 50,
-        rotate: 0
+        flipH: false,
+        flipV: false,
+        rotate: 0,
+        scale: 1
     }, options);
     var sprite = gf.spriteFragment.clone().css({left: options.x, top: options.y, width: options.width, height: options.height}).attr('id', divId).data("gf", options);
 
@@ -185,7 +188,27 @@ gf.addSprite = function(parent, divId, options)
 }
 
 gf.transform = function(div, options){
+    var options = $.extend({
+        x: 0,
+        y: 0,
+        row: 0,
+        col: 0,
+        width: 50,
+        height: 50,
+        flipH: false,
+        flipV: false,
+        rotate: 0,
+        scale: 1
+    }, options);
+
     var gf = div.data("gf");
+
+    if (gf == undefined)
+    {
+        div.data("gf", options);
+        gf = options;
+    }
+
     if(options.flipH !== undefined){
         gf.flipH = options.flipH;
     }
@@ -195,12 +218,11 @@ gf.transform = function(div, options){
     if(options.rotate !== undefined){
         gf.rotate = options.rotate;
     }
-
-    (options.scale !== undefined) ? gf.scale = options.scale : gf.scale = 1;
-
+    if(options.scale !== undefined){
+        gf.scale = options.scale;
+    }
     var factorH = gf.flipH ? -1 : 1;
     var factorV = gf.flipV ? -1 : 1;
-
     div.css("transform", "rotate("+gf.rotate+"deg) scale("+(gf.scale*factorH)+","+(gf.scale*factorV)+")");
 }
 
@@ -223,7 +245,7 @@ gf.spriteMove = function(div, startAnim, endAnim, options){
             gf.setAnimation(div, endAnim);
             if (options.removeWhenDone)
             {
-                $('#' + options.div).css('opacity', 1);
+                $('#' + options.replaceWithDiv).css('opacity', 1);
                 div.remove();
             }
         }
@@ -236,12 +258,10 @@ gf.groupFragment = $("<div style='position: absolute; overflow: visible;' class=
 gf.addGroup = function(parent, divId, options)
 {
     var options = $.extend({
-        x: 0,
-        y: 0,
         height: 0,
         width: 0
     }, options);
-    var group = gf.groupFragment.clone().css({left: options.x, top: options.y, height: options.height, width: options.width}).attr('id', divId).data("gf", options);
+    var group = gf.groupFragment.clone().css({height: options.height, width: options.width}).attr('id', divId).data("gf", options);
     parent.append(group);
     return group;
 }

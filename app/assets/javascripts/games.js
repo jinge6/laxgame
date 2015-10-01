@@ -60,6 +60,21 @@ function previousMove()
     return currentMove==0?0:currentMove-1;
 }
 
+function previousMove(id)
+{
+    var lastMove = 0;
+    // last time this id object moved
+    for (var i=moves.length-1; i>=0; i--)
+    {
+        if (moves[i][1] == id && moves[i][0] != currentMove)
+        {
+            lastMove = moves[i][0]
+            break;
+        }
+    }
+    return lastMove;
+}
+
 function nextMove()
 {
     return currentMove+1;
@@ -68,6 +83,28 @@ function nextMove()
 function getCoordinate(rowOrCol)
 {
     return rowOrCol * moveablesSize
+}
+
+function orientSpriteDirection(id)
+{
+    var div = $('#'+id);
+    var startFrom = 0;
+    var finishAt = 0;
+
+    for (var i=0; i<moves.length; i++)
+    {
+        if (moves[i][0] == (currentMove - 1) && moves[i][1] == id)
+        {
+            startFrom = moves[i][3];
+            continue;
+        }
+        if (moves[i][0] == currentMove && moves[i][1] == id)
+        {
+            finishAt = moves[i][3];
+            break;
+        }
+    }
+    return (finishAt < startFrom)
 }
 
 function getCountDownDate(millisecs) {
@@ -293,17 +330,17 @@ function getContainmentCoords(id, constrainFromMove)
     {
         startRow = 0;
     }
-    if (row >= 15)
+    if (row >= 7)
     {
-        stopRow = 15;
+        stopRow = 7;
     }
     if (col <= 1)
     {
         startCol = 0;
     }
-    if (col >= 7)
+    if (col >= 15)
     {
-        stopCol = 7;
+        stopCol = 15;
     }
 
     var x1 = getCoordinate(startCol) + containerOffset.left;
@@ -316,6 +353,7 @@ function getContainmentCoords(id, constrainFromMove)
 
 function setContainment(id, constrainFromMove)
 {
+    console.log(currentMove, constrainFromMove);
     addVisualMoveOptions(id, constrainFromMove);
     addContainmentToMoveable(id, constrainFromMove);
 }
@@ -351,17 +389,17 @@ function addVisualMoveOptions(id, constrainFromMove)
     {
         startRow = 0;
     }
-    if (stopRow > 15)
+    if (stopRow > 7)
     {
-        stopRow = 15;
+        stopRow = 7;
     }
     if (startCol < 0)
     {
         startCol = 0;
     }
-    if (stopCol > 7)
+    if (stopCol > 15)
     {
-        stopCol = 7;
+        stopCol = 15;
     }
 
     for (var i=startRow; i<=stopRow; i++)

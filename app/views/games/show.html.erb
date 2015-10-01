@@ -1,7 +1,24 @@
 <img id="moveToSpot" hidden="true" src="<%= image_url('moveoption.png') %>">
-<div id="laxGame">
-  <img id="startButton" src="/assets/fo.png" />
-</div>
+<table>
+  <tbody>
+    <tr>
+      <td>
+        <div id="bigscreen">
+          <div id="shotclock" class="bigScreenDisplay"></div>
+          <div id="scoreboard" class="bigScreenDisplay"></div>
+          <div id="gametime" class="bigScreenDisplay"></div>
+        </div>
+      </td>
+    </tr>
+  <tr>
+    <td>
+      <div id="laxGame">
+        <img id="startButton" src="/assets/fo.png" />
+      </div>
+    </td>
+  </tr>
+  </tbody>
+</table>
 <div>
   <button id="draggableButton">Drag Player</button>&nbsp;
   <button id="runButton">Run Dude, Run</button>
@@ -21,6 +38,10 @@
 
       fieldBackground = gf.addSprite(field, "fieldBackground", {width: 800, height: 400});
       gf.setAnimation(fieldBackground, fieldBackgroundAnim);
+
+      $("#shotclock").text("10");
+      $("#scoreboard").text("0");
+      $("#gametime").text("0");
 
       player.div = addPlayer(field, currentMove, "player", 3, 3);
       gf.setAnimation(player.div, playerAnim.stand);
@@ -42,6 +63,19 @@
         rate: 100
       })
     };
+
+    function movePlayers()
+    {
+      for (var i = 0; i < moves.length; i++)
+      {
+        if (moves[i][0] == currentMove)
+        {
+          var div = $('#' + moves[i][1] + '_start');
+          gf.transform(div, {flipH: orientSpriteDirection(moves[i][1])});
+          gf.spriteMove(div, playerAnim.run, playerAnim.stand, {y:getCoordinate(moves[i][2]), x:getCoordinate(moves[i][3]), removeWhenDone: true, replaceWithDiv: moves[i][1]});
+        }
+      }
+    }
 
     var player = new (function(){
       var status = "stand";
@@ -69,15 +103,30 @@
       };
     });
 
-    var gameLoop = function() {
-      var idle = true;
-      if(idle)
+    var gameLoop = function()
+    {
+
+    }
+
+    var shotClock = function() {
+      var time = parseInt($("#shotclock").text());
+
+      if (time <= 0)
       {
-        player.idle();
+        movePlayers();
+        $("#shotclock").text(10);
+        currentMove++;
       }
+      else
+      {
+        $("#shotclock").text(time-1);
+      }
+
+
     }
 
     gf.addCallback(gameLoop, 30);
+    gf.addCallback(shotClock, 1000);
 
     $("#startButton").click(function() {
       gf.startGame(initialize);
@@ -90,13 +139,7 @@
 
     $("#runButton").click(function()
     {
-      for (var i = 0; i < moves.length; i++)
-      {
-        if (moves[i][0] == currentMove)
-        {
-          gf.spriteMove($('#' + moves[i][1] + '_start'), playerAnim.run, playerAnim.stand, {y:getCoordinate(moves[i][2]), x:getCoordinate(moves[i][3]), removeWhenDone: true, div: moves[i][1]});
-        }
-      }
+
     });
 
     function setDraggable(div)
@@ -114,7 +157,7 @@
     {
       if (ui.draggable[0].id.indexOf("ball") == -1)
       {
-        setContainment(ui.draggable[0].id, previousMove());
+        setContainment(ui.draggable[0].id, previousMove(ui.draggable[0].id));
         $('.moveOption').fadeIn(200);
       }
     }
@@ -135,7 +178,7 @@
       var player = addPlayer($("#"+id).parent(), currentMove, id, row, col);
       gf.setAnimation(player, playerAnim.stand);
       player.css({opacity: 0.3});
-      addMoveableStartingPointBack(id, previousMove());
+      addMoveableStartingPointBack(id, previousMove(id));
       $(".remove").remove();
       setDraggable($("#"+id));
     }
