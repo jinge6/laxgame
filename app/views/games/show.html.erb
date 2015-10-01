@@ -49,8 +49,8 @@
       $("#scoreboard").text("0");
       $("#gametime").text("0");
 
-      player.div = addPlayer(field, currentMove, "player", 3, 3);
-      gf.setAnimation(player.div, playerAnim.stand);
+      var player = addPlayer(field, currentMove, "player", 3, 3);
+      gf.setAnimation(player, playerAnim.stand);
 
       $("#startButton").remove();
       container.css("display", "block");
@@ -82,32 +82,6 @@
         }
       }
     }
-
-    var player = new (function(){
-      var status = "stand";
-
-      this.update = function () {
-
-      };
-
-      this.idle  = function (){
-        switch (status) {
-          case "stand":
-            status = "stand";
-            gf.setAnimation(this.div, playerAnim.stand);
-            break;
-          case "moveable":
-            status = "moveable";
-            gf.setDraggable(this.div);
-            gf.setAnimation(this.div, playerAnim.stand);
-            break;
-          case "run":
-            status = "run";
-            gf.setAnimation(this.div, playerAnim.run, true);
-            break;
-        }
-      };
-    });
 
     var gameLoop = function()
     {
@@ -143,11 +117,6 @@
     $("#draggableButton").click(function() {
       currentMove++;
       setDraggable($("#player"));
-    });
-
-    $("#runButton").click(function()
-    {
-
     });
 
     function setDraggable(div)
