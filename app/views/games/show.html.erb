@@ -10,18 +10,24 @@
         </div>
       </td>
     </tr>
-  <tr>
-    <td>
-      <div id="laxGame">
-        <img id="startButton" src="/assets/fo.png" />
-      </div>
-    </td>
-  </tr>
+    <tr>
+      <td>
+        <div id="bigscreen">
+          <div id="instructions" class="bigScreenDisplay"></div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <div id="laxGame">
+          <img id="startButton" src="/assets/fo.png" />
+        </div>
+      </td>
+    </tr>
   </tbody>
 </table>
 <div>
-  <button id="draggableButton">Drag Player</button>&nbsp;
-  <button id="runButton">Run Dude, Run</button>
+  <button id="draggableButton">Drag Player</button>
 </div>
 <div><%= link_to 'Back', games_path %></div>
 
@@ -108,25 +114,27 @@
 
     }
 
-    var shotClock = function() {
-      var time = parseInt($("#shotclock").text());
+    var clock = function() {
+      var shotclockTime = parseInt($("#shotclock").text());
+      var gameTime = parseInt($("#gametime").text());
 
-      if (time <= 0)
+      if (shotclockTime <= 0)
       {
         movePlayers();
         $("#shotclock").text(10);
         currentMove++;
+        $("#instructions").text("Make your next move!! Choose wisely");
+
       }
       else
       {
-        $("#shotclock").text(time-1);
+        $("#shotclock").text(shotclockTime-1);
+        $("#gametime").text(gameTime+1);
       }
-
-
     }
 
     gf.addCallback(gameLoop, 30);
-    gf.addCallback(shotClock, 1000);
+    gf.addCallback(clock, 1000);
 
     $("#startButton").click(function() {
       gf.startGame(initialize);
