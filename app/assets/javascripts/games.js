@@ -2,7 +2,7 @@ var moves = [];
 var currentMove = 0;
 var moveablesSize = 50;
 
-function addPlayer(container, move, id, row, col)
+function addMoveable(container, move, id, row, col)
 {
     var y = getCoordinate(row);
     var x = getCoordinate(col);
@@ -43,13 +43,13 @@ function addMoveableStartingPointBack(id, startingMove)
     var x = getCoordinate(col);
     var $moveable = $("<div id='" + id + "_start' style='position: absolute;'></div>");
 
-    if (id.indexOf('ball') >= 0)
+    if (id.indexOf("ball") == -1)
     {
-        $moveable.css({backgroundImage: "url(/assets/ball.png)"});
+        $moveable.css({backgroundImage: "url(/assets/standing_sprite.png)"});
     }
     else
     {
-        $moveable.css({backgroundImage: "url(/assets/standing_sprite.png)"});
+        $moveable.css({backgroundImage: "url(/assets/ball.png)"});
     }
     $moveable.css({height: 50, width: 50, left: x, top: y}).zIndex(1000);
     $moveable.appendTo($("#"+id).parent());
