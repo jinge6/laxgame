@@ -66,9 +66,6 @@
       stand: new gf.animation({
         url: "/assets/standing_sprite.png"
       }),
-      moveable: new gf.animation({
-        url: "/assets/standing_sprite.png"
-      }),
       runSideways:  new gf.animation({
         url:    "/assets/running_sprite.png",
         numberOfFrames: 3,
@@ -83,14 +80,16 @@
         url:    "/assets/running_sprite_away.png",
         numberOfFrames: 3,
         rate: 100
+      }),
+      throwSideways:  new gf.animation({
+        url:    "/assets/throw_sideways.png",
+        numberOfFrames: 3,
+        rate: 100
       })
     };
 
     var oppositionTeamPlayerAnim = {
       stand: new gf.animation({
-        url: "/assets/standing_sprite_2.png"
-      }),
-      moveable: new gf.animation({
         url: "/assets/standing_sprite_2.png"
       }),
       runSideways:  new gf.animation({
@@ -107,8 +106,12 @@
         url:    "/assets/running_sprite_away_2.png",
         numberOfFrames: 3,
         rate: 100
+      }),
+      throwSideways:  new gf.animation({
+        url:    "/assets/throw_sideways.png",
+        numberOfFrames: 3,
+        rate: 100
       })
-
     };
 
     var ballAnim = {
@@ -128,13 +131,27 @@
           if (moves[i][1].indexOf("ball") == -1)
           {
             var animType = div.data("myteam") == true ? myTeamPlayerAnim : oppositionTeamPlayerAnim;
-            var runType = getSpriteRunType(animType, moves[i]);
-            gf.spriteMove(div, runType, animType.stand, {
+            // throw first
+
+            var XY = previousXY(moves[i][1]);
+            var animMethod = getSpriteRunMethod(animType, moves[i]);
+            spriteThrowAndMove(div, animType.throwSideways, animMethod, animType.stand, {
+              y: getCoordinate(moves[i][2]),
+              x: getCoordinate(moves[i][3]),
+              start_x: getCoordinate(XY[0]),
+              start_y: getCoordinate(XY[1]),
+              removeWhenDone: true,
+              replaceWithDiv: moves[i][1]
+            });
+  /*
+            // then move
+            var animMethod = getSpriteRunMethod(animType, moves[i]);
+            gf.spriteMove(div, animMethod, animType.stand, {
               y: getCoordinate(moves[i][2]),
               x: getCoordinate(moves[i][3]),
               removeWhenDone: true,
               replaceWithDiv: moves[i][1]
-            });
+            });*/
           }
           else
           {
@@ -149,7 +166,7 @@
       }
     }
 
-    function getSpriteRunType(animType, moveArrayRow)
+    function getSpriteRunMethod(animType, moveArrayRow)
     {
       var startRow = 0;
       var finishRow = moveArrayRow[2];
@@ -188,7 +205,11 @@
 
       var y = getCoordinate(row);
       var x = getCoordinate(col);
-      var $moveable = $("<div id='" + id + "_start' style='position: absolute;'></div>");
+      var $moveable = $("#" + id + "_start");
+      if (!$moveable.length)
+      {
+        $moveable = $("<div id='" + id + "_start' style='position: absolute;'></div>");
+      }
       $moveable.data("myteam", myTeam);
 
       if (id.indexOf("ball") == -1)
@@ -286,7 +307,7 @@
       {
         gf.setAnimation(moveable, ballAnim.groundball);
       }
-      moveable.css({opacity: 0.3});
+      moveable.css({opacity: 0.3}).zIndex(1500);
       addMoveableStartingPointBack(id, previousMove(id), $("#"+id).data("myteam"));
       $(".remove").remove();
       setDraggable($("#"+id));

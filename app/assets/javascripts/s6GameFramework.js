@@ -236,7 +236,7 @@ gf.spriteMove = function(div, startAnim, endAnim, options){
         left: options.x,
         top: options.y
     }, {
-        duration: 1000,
+        duration: options.duration,
         specialEasing: {
             width: "linear",
             height: "easeOutBounce"

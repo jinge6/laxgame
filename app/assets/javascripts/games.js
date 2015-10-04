@@ -56,6 +56,22 @@ function previousMove(id)
     return lastMove;
 }
 
+function previousXY(id)
+{
+    var XY = [];
+    // last time this id object moved
+    for (var i=moves.length-1; i>=0; i--)
+    {
+        if (moves[i][1] == id && moves[i][0] != currentMove)
+        {
+            XY.push(moves[i][3]);
+            XY.push(moves[i][2]);
+            break;
+        }
+    }
+    return XY;
+}
+
 function nextMove()
 {
     return currentMove+1;
@@ -82,6 +98,33 @@ function orientSpriteDirection(movesArrayRow)
         }
     }
     return (finishAt < startFrom)
+}
+
+function spriteThrowAndMove(div, throwAnim, runAnim, endAnim, options)
+{
+    gf.setAnimation(div, throwAnim, false);
+    var options = $.extend({
+        duration: 1000
+    }, options);
+
+    div.animate({
+        left: options.start_x,
+        top: options.start_y
+    }, {
+        duration: 300,
+        specialEasing: {
+            width: "linear",
+            height: "easeOutBounce"
+        },
+        complete: function() {
+            gf.spriteMove(div, runAnim, endAnim, {
+                y: options.y,
+                x: options.x,
+                removeWhenDone: true,
+                replaceWithDiv: options.replaceWithDiv
+            });
+        }
+    });
 }
 
 function getCountDownDate(millisecs) {
