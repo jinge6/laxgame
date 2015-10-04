@@ -49,11 +49,11 @@
       $("#scoreboard").text("0");
       $("#gametime").text("0");
 
-      var player = addMoveable(field, currentMove, "player", 3, 3);
-      gf.setAnimation(player, playerAnim.stand);
+      var player = addMoveable(field, currentMove, "player", 3, 3, MYTEAM);
+      gf.setAnimation(player, myTeamPlayerAnim.stand);
 
-      var player2 = addMoveable(field, currentMove, "player2", 6, 3);
-      gf.setAnimation(player2, playerAnim.stand);
+      var player2 = addMoveable(field, currentMove, "player2", 6, 3, OPPOSITION);
+      gf.setAnimation(player2, oppositionTeamPlayerAnim.stand);
 
       var ball = addMoveable(field, currentMove, "ball", 4, 4);
       gf.setAnimation(ball, ballAnim.groundball);
@@ -62,18 +62,53 @@
       container.css("display", "block");
     }
 
-    var playerAnim = {
+    var myTeamPlayerAnim = {
       stand: new gf.animation({
         url: "/assets/standing_sprite.png"
       }),
       moveable: new gf.animation({
         url: "/assets/standing_sprite.png"
       }),
-      run:  new gf.animation({
+      runSideways:  new gf.animation({
         url:    "/assets/running_sprite.png",
         numberOfFrames: 3,
         rate: 100
+      }),
+      runTowards:  new gf.animation({
+        url:    "/assets/running_sprite_towards.png",
+        numberOfFrames: 3,
+        rate: 100
+      }),
+      runAway:  new gf.animation({
+        url:    "/assets/running_sprite_away.png",
+        numberOfFrames: 3,
+        rate: 100
       })
+    };
+
+    var oppositionTeamPlayerAnim = {
+      stand: new gf.animation({
+        url: "/assets/standing_sprite_2.png"
+      }),
+      moveable: new gf.animation({
+        url: "/assets/standing_sprite_2.png"
+      }),
+      runSideways:  new gf.animation({
+        url:    "/assets/running_sprite_2.png",
+        numberOfFrames: 3,
+        rate: 100
+      }),
+      runTowards:  new gf.animation({
+        url:    "/assets/running_sprite_towards_2.png",
+        numberOfFrames: 3,
+        rate: 100
+      }),
+      runAway:  new gf.animation({
+        url:    "/assets/running_sprite_away_2.png",
+        numberOfFrames: 3,
+        rate: 100
+      })
+
     };
 
     var ballAnim = {
@@ -89,10 +124,12 @@
         if (moves[i][0] == currentMove)
         {
           var div = $('#' + moves[i][1] + '_start');
-          gf.transform(div, {flipH: orientSpriteDirection(moves[i][1])});
+          gf.transform(div, {flipH: orientSpriteDirection(moves[i])});
           if (moves[i][1].indexOf("ball") == -1)
           {
-            gf.spriteMove(div, playerAnim.run, playerAnim.stand, {
+            var animType = div.data("myteam") == true ? myTeamPlayerAnim : oppositionTeamPlayerAnim;
+            var runType = getSpriteRunType(animType, moves[i]);
+            gf.spriteMove(div, runType, animType.stand, {
               y: getCoordinate(moves[i][2]),
               x: getCoordinate(moves[i][3]),
               removeWhenDone: true,
@@ -110,6 +147,61 @@
           }
         }
       }
+    }
+
+    function getSpriteRunType(animType, moveArrayRow)
+    {
+      var startRow = 0;
+      var finishRow = moveArrayRow[2];
+      var startCol = 0;
+      var finishCol = moveArrayRow[3];
+      var lastMove = previousMove(moveArrayRow[1]);
+
+      for (var i=0; i<moves.length; i++)
+      {
+        if (moves[i][0] == lastMove && moves[i][1] == moveArrayRow[1])
+        {
+          startCol = moves[i][3];
+          startRow = moves[i][2];
+          break;
+        }
+      }
+      if (startCol != finishCol)
+      {
+        return animType.runSideways
+      }
+      else if (startRow < finishRow)
+      {
+        return animType.runTowards
+      }
+      else
+      {
+        return animType.runAway
+      }
+    }
+
+    function addMoveableStartingPointBack(id, startingMove, myTeam)
+    {
+
+      var row = getMovesRowOrColumn(id, startingMove, "row");
+      var col = getMovesRowOrColumn(id, startingMove, "col");
+
+      var y = getCoordinate(row);
+      var x = getCoordinate(col);
+      var $moveable = $("<div id='" + id + "_start' style='position: absolute;'></div>");
+      $moveable.data("myteam", myTeam);
+
+      if (id.indexOf("ball") == -1)
+      {
+        var animType = $moveable.data("myteam") == true ? myTeamPlayerAnim : oppositionTeamPlayerAnim;
+        gf.setAnimation($moveable, animType.stand);
+      }
+      else
+      {
+        gf.setAnimation($moveable, ballAnim.groundball);
+      }
+      $moveable.css({height: moveablesSize, width: moveablesSize, left: x, top: y}).zIndex(1000);
+      $moveable.appendTo($("#"+id).parent());
     }
 
     var gameLoop = function()
@@ -173,6 +265,7 @@
     {
       var id = ui.draggable[0].id;
       $("#" + id).attr('class', 'remove');
+
       var xPos = parseInt(ui.draggable[0].style["left"].replace("px", ""));
       var yPos = parseInt(ui.draggable[0].style["top"].replace("px", ""));
       var newXPos = Math.round(xPos / moveablesSize) * moveablesSize;
@@ -183,17 +276,18 @@
       $('.moveOption').promise().done(function (){$('.moveOption').remove()});
 
       // add the moved player or ball back
-      var moveable = addMoveable($("#"+id).parent(), currentMove, id, row, col);
+      var moveable = addMoveable($("#"+id).parent(), currentMove, id, row, col, $("#" + id).data("myteam"));
       if (id.indexOf("ball") == -1)
       {
-        gf.setAnimation(moveable, playerAnim.stand);
+        var animType = moveable.data("myteam") == true ? myTeamPlayerAnim : oppositionTeamPlayerAnim;
+        gf.setAnimation(moveable, animType.stand);
       }
       else
       {
         gf.setAnimation(moveable, ballAnim.groundball);
       }
       moveable.css({opacity: 0.3});
-      addMoveableStartingPointBack(id, previousMove(id));
+      addMoveableStartingPointBack(id, previousMove(id), $("#"+id).data("myteam"));
       $(".remove").remove();
       setDraggable($("#"+id));
     }

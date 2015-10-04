@@ -1,13 +1,16 @@
 var moves = [];
 var currentMove = 0;
 var moveablesSize = 50;
+var MYTEAM = true;
+var OPPOSITION = false;
 
-function addMoveable(container, move, id, row, col)
+function addMoveable(container, move, id, row, col, myteam)
 {
     var y = getCoordinate(row);
     var x = getCoordinate(col);
 
     var player = gf.addSprite(container, id, {x:x, y:y});
+    player.data("myteam", myteam);
     saveMove(move, id, row, col);
 
     return player
@@ -31,28 +34,6 @@ function saveMove(move, id, row, col)
     {
         moves.push([move,id, row, col]);
     }
-}
-
-function addMoveableStartingPointBack(id, startingMove)
-{
-
-    var row = getMovesRowOrColumn(id, startingMove, "row");
-    var col = getMovesRowOrColumn(id, startingMove, "col");
-
-    var y = getCoordinate(row);
-    var x = getCoordinate(col);
-    var $moveable = $("<div id='" + id + "_start' style='position: absolute;'></div>");
-
-    if (id.indexOf("ball") == -1)
-    {
-        $moveable.css({backgroundImage: "url(/assets/standing_sprite.png)"});
-    }
-    else
-    {
-        $moveable.css({backgroundImage: "url(/assets/ball.png)"});
-    }
-    $moveable.css({height: 50, width: 50, left: x, top: y}).zIndex(1000);
-    $moveable.appendTo($("#"+id).parent());
 }
 
 function previousMove()
@@ -85,22 +66,18 @@ function getCoordinate(rowOrCol)
     return rowOrCol * moveablesSize
 }
 
-function orientSpriteDirection(id)
+function orientSpriteDirection(movesArrayRow)
 {
-    var div = $('#'+id);
     var startFrom = 0;
-    var finishAt = 0;
+    var finishAt = movesArrayRow[3];
+    var lastMove = previousMove(movesArrayRow[1]);
+
 
     for (var i=0; i<moves.length; i++)
     {
-        if (moves[i][0] == (currentMove - 1) && moves[i][1] == id)
+        if (moves[i][0] == lastMove && moves[i][1] == movesArrayRow[1])
         {
             startFrom = moves[i][3];
-            continue;
-        }
-        if (moves[i][0] == currentMove && moves[i][1] == id)
-        {
-            finishAt = moves[i][3];
             break;
         }
     }
@@ -353,7 +330,6 @@ function getContainmentCoords(id, constrainFromMove)
 
 function setContainment(id, constrainFromMove)
 {
-    console.log(currentMove, constrainFromMove);
     addVisualMoveOptions(id, constrainFromMove);
     addContainmentToMoveable(id, constrainFromMove);
 }
