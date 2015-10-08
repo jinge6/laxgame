@@ -28,6 +28,8 @@
 </table>
 <div>
   <button id="draggableButton">Drag Player</button>
+  <button id="refFaceoffButton">Ref Faceoff</button>
+  <button id="faceoffButton">Faceoff</button>
 </div>
 <div><%= link_to 'Back', games_path %></div>
 
@@ -49,14 +51,17 @@
       $("#scoreboard").text("0");
       $("#gametime").text("0");
 
-      var player = addMoveable(field, currentMove, "player", 3, 3, MYTEAM);
+      var player = addMoveable(field, currentMove, "player", 2, 3, MYTEAM);
       gf.setAnimation(player, myTeamPlayerAnim.stand);
 
-      var player2 = addMoveable(field, currentMove, "player2", 6, 3, OPPOSITION);
+      var player2 = addMoveable(field, currentMove, "player2", 3, 3, OPPOSITION);
       gf.setAnimation(player2, oppositionTeamPlayerAnim.stand);
 
-      var ball = addMoveable(field, currentMove, "ball", 4, 4);
-      gf.setAnimation(ball, ballAnim.groundball);
+      var faceoff = gf.addSprite(field, "faceoff", {width: 100, height: 100, x: 350, y: 150});
+      gf.setAnimation(faceoff, faceoffAnim.set);
+
+      var referee = gf.addSprite(field, "referee", {width: 100, height: 100, x: 250, y: 100});
+      gf.setAnimation(referee, refereeAnim.stand);
 
       $("#startButton").remove();
       container.css("display", "block");
@@ -111,6 +116,43 @@
         url:    "/assets/throw_sideways.png",
         numberOfFrames: 3,
         rate: 100
+      })
+    };
+
+    var faceoffAnim = {
+      set:  new gf.animation({
+        url:    "/assets/faceoff_set.png",
+        width: 100
+      }),
+      draw:  new gf.animation({
+        url:    "/assets/faceoff_spritesheet.png",
+        numberOfFrames: 4,
+        rate: 300,
+        width: 100,
+        loop: false
+      })
+    };
+
+    var refereeAnim = {
+      stand:  new gf.animation({
+        url:    "/assets/referee_standing.png",
+        width: 100,
+        height: 100
+      }),
+      draw:  new gf.animation({
+        url:    "/assets/referee_faceoff_321.png",
+        numberOfFrames: 4,
+        rate: 1000,
+        width: 100,
+        height: 100,
+        loop: false
+      }),
+      goal:  new gf.animation({
+        url:    "/assets/referee_goal.png",
+        numberOfFrames: 4,
+        rate: 300,
+        width: 100,
+        height: 100
       })
     };
 
@@ -261,6 +303,16 @@
       setDraggable($("#player"));
       setDraggable($("#player2"));
       setDraggable($("#ball"));
+    });
+
+    $("#refFaceoffButton").click(function() {
+      var referee = $("#referee");
+      gf.setAnimation(referee, refereeAnim.draw);
+    });
+
+    $("#faceoffButton").click(function() {
+      var faceoff = $("#faceoff");
+      gf.setAnimation(faceoff, faceoffAnim.draw);
     });
 
     function setDraggable(div)

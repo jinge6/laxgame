@@ -1,6 +1,6 @@
 gf = {
 
-    baseRate: 100
+    baseRate: 30
 };
 
 gf.imagesToPreload = [];
@@ -94,27 +94,34 @@ gf.refreshGame = function (){
         var animate = gf.animations[i];
 
         animate.counter++;
-        if (animate.counter == animate.animation.rate) {
+        if (animate.counter == animate.animation.rate)
+        {
             animate.counter = 0;
             animate.animation.currentFrame++;
-            if(!animate.loop && animate.animation.currentFrame > animate.animation.numberOfFrames){
+            if(!animate.loop && animate.animation.currentFrame >= animate.animation.numberOfFrames)
+            {
                 finishedAnimations.push(i);
-            } else {
+            }
+            else
+            {
                 animate.animation.currentFrame %= animate.animation.numberOfFrames;
                 gf.setFrame(animate.div, animate.animation);
             }
         }
     }
-    for(var i=0; i < finishedAnimations.length; i++){
+    for(var i=0; i < finishedAnimations.length; i++)
+    {
         gf.animations.splice(finishedAnimations[i], 1);
     }
 
     // execute the callbacks
-    for (var i=0; i < gf.callbacks.length; i++) {
+    for (var i=0; i < gf.callbacks.length; i++)
+    {
         var call  = gf.callbacks[i];
 
         call.counter++;
-        if (call.counter == call.rate) {
+        if (call.counter == call.rate)
+        {
             var currentTime = (new Date()).getTime();
             call.counter = 0;
             call.callback(currentTime - gf.time);
@@ -130,23 +137,22 @@ gf.setAnimation = function(div, animation, loop)
         div: div,
         loop: loop,
         counter: 0
-    };
+    }
     if (animation.url)
     {
         div.css("backgroundImage", "url("+animation.url+")");
     }
     // search if this div already has an animation
     var divFound = false;
-    for (var i=0; i<gf.animations.length; i++)
-    {
-        if (gf.animations[i].div == div)
-        {
+    for (var i = 0; i < gf.animations.length; i++) {
+        if(gf.animations[i].div.is(div)){
             divFound = true;
             gf.animations[i] = animate;
         }
     }
-    if (!divFound)
-    {
+
+    // otherwise we add it to the array
+    if(!divFound) {
         gf.animations.push(animate);
     }
 }
