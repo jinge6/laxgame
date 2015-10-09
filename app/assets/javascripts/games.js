@@ -103,28 +103,15 @@ function orientSpriteDirection(movesArrayRow)
 function spriteThrowAndMove(div, throwAnim, runAnim, endAnim, options)
 {
     gf.setAnimation(div, throwAnim, false);
-    var options = $.extend({
-        duration: 1000
-    }, options);
 
-    div.animate({
-        left: options.start_x,
-        top: options.start_y
-    }, {
-        duration: 300,
-        specialEasing: {
-            width: "linear",
-            height: "easeOutBounce"
-        },
-        complete: function() {
-            gf.spriteMove(div, runAnim, endAnim, {
-                y: options.y,
-                x: options.x,
-                removeWhenDone: true,
-                replaceWithDiv: options.replaceWithDiv
-            });
-        }
-    });
+    setTimeout(function() {
+        gf.spriteMove(div, runAnim, endAnim, {
+            y: options.y,
+            x: options.x,
+            removeWhenDone: true,
+            replaceWithDiv: options.replaceWithDiv
+        });
+    }, 600);
 }
 
 function getCountDownDate(millisecs) {
@@ -171,20 +158,6 @@ function runFaceoff()
                 gameLoop();
             });
         });
-}
-
-function flickBallOut()
-{
-    var row = 8;
-    var col = 4;
-
-    while (row == 8 && col == 4)
-    {
-        row = 7 + Math.floor(Math.random() * 3);
-        col = 2 + Math.floor(Math.random() * 6);
-    }
-    currentMove++;
-    $('#ball').animate({left: getCoordinate(col) + "px", top: getCoordinate(row) + "px"});
 }
 
 function runPlay()

@@ -28,7 +28,6 @@
 </table>
 <div>
   <button id="draggableButton">Drag Player</button>
-  <button id="refFaceoffButton">Ref Faceoff</button>
   <button id="faceoffButton">Faceoff</button>
 </div>
 <div><%= link_to 'Back', games_path %></div>
@@ -173,7 +172,6 @@
           if (moves[i][1].indexOf("ball") == -1)
           {
             var animType = div.data("myteam") == true ? myTeamPlayerAnim : oppositionTeamPlayerAnim;
-            // throw first
 
             var XY = previousXY(moves[i][1]);
             var animMethod = getSpriteRunMethod(animType, moves[i]);
@@ -305,15 +303,48 @@
       setDraggable($("#ball"));
     });
 
-    $("#refFaceoffButton").click(function() {
+    $("#faceoffButton").click(function() {
       var referee = $("#referee");
       gf.setAnimation(referee, refereeAnim.draw);
+
+
+      setTimeout(function(){
+        $("#referee").fadeOut();
+        var faceoff = $("#faceoff");
+        gf.setAnimation(faceoff, faceoffAnim.draw);
+      }, 4000);
+
+      setTimeout(function(){
+        var ball = addMoveable(field, currentMove, "ball", 4, 8);
+        gf.setAnimation(ball, ballAnim.groundball);
+        flickBallOut();
+        $("#faceoff").fadeOut();
+      }, 5200);
+
+      setTimeout(function() {
+        $("#referee").remove();
+        $("#faceoff").remove();
+      }, 6000);
+
     });
 
-    $("#faceoffButton").click(function() {
-      var faceoff = $("#faceoff");
-      gf.setAnimation(faceoff, faceoffAnim.draw);
-    });
+    function flickBallOut()
+    {
+      var row = 4;
+      var col = 8;
+
+      while (row == 4 && col == 8)
+      {
+        row = 7 + Math.floor(Math.random() * 3);
+        col = 2 + Math.floor(Math.random() * 6);
+      }
+      currentMove++;
+
+      gf.spriteMove($("#ball"), ballAnim.groundball, ballAnim.groundball, {
+        y: getCoordinate(col),
+        x: getCoordinate(row)
+      });
+    }
 
     function setDraggable(div)
     {
