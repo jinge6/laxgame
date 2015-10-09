@@ -158,6 +158,11 @@
     var ballAnim = {
       groundball: new gf.animation({
         url: "/assets/ball.png"
+      }),
+      moving:  new gf.animation({
+        url:    "/assets/ball_moving.png",
+        numberOfFrames: 3,
+        rate: 300
       })
     };
 
@@ -195,7 +200,7 @@
           }
           else
           {
-            gf.spriteMove(div, ballAnim.groundball, ballAnim.groundball, {
+            gf.spriteMove(div, ballAnim.moving, ballAnim.groundball, {
               y: getCoordinate(moves[i][2]),
               x: getCoordinate(moves[i][3]),
               removeWhenDone: true,
