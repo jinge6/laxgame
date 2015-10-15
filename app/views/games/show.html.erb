@@ -20,7 +20,10 @@
     <tr>
       <td>
         <div id="laxGame">
-          <img id="startButton" src="/assets/fo.png" />
+          <div id="splash" class="splashBackground">
+            <img id="singlePlayer" src="/assets/single_player_match.png"/>
+            <img id="challengeMatch" src="/assets/challenge_match.png"/>
+          </div>
         </div>
       </td>
     </tr>
@@ -35,36 +38,6 @@
 <script>
   $(document).ready(function ()
   {
-    var initialize = function()
-    {
-      var fieldBackgroundAnim = new gf.animation({url: "/assets/laxfield.jpg", width: 800, height: 400});
-
-      $('#laxGame').append("<div id='container' style='width: 800px; height: 400px;'>");
-      container = $("#container");
-      field = gf.addGroup(container, "fieldContainer", {width: 800, height: 400});
-
-      fieldBackground = gf.addSprite(field, "fieldBackground", {width: 800, height: 400});
-      gf.setAnimation(fieldBackground, fieldBackgroundAnim);
-
-      $("#shotclock").text("10");
-      $("#scoreboard").text("0");
-      $("#gametime").text("0");
-
-      var player = addMoveable(field, currentMove, "player", 2, 3, MYTEAM);
-      gf.setAnimation(player, myTeamPlayerAnim.stand);
-
-      var player2 = addMoveable(field, currentMove, "player2", 3, 3, OPPOSITION);
-      gf.setAnimation(player2, oppositionTeamPlayerAnim.stand);
-
-      var faceoff = gf.addSprite(field, "faceoff", {width: 100, height: 100, x: 350, y: 150});
-      gf.setAnimation(faceoff, faceoffAnim.set);
-
-      var referee = gf.addSprite(field, "referee", {width: 100, height: 100, x: 250, y: 100});
-      gf.setAnimation(referee, refereeAnim.stand);
-
-      $("#startButton").remove();
-      container.css("display", "block");
-    }
 
     var myTeamPlayerAnim = {
       stand: new gf.animation({
@@ -166,6 +139,60 @@
       })
     };
 
+    var initialize = function()
+    {
+      $("#splash").remove();
+      $('#laxGame').append("<div id='container' style='width: 800px; height: 400px;'>");
+      container = $("#container");
+
+      var fieldBackgroundAnim = new gf.animation({url: "/assets/laxfield.jpg", width: 800, height: 400});
+
+      field = gf.addGroup(container, "fieldContainer", {width: 800, height: 400});
+
+      fieldBackground = gf.addSprite(field, "fieldBackground", {width: 800, height: 400});
+      gf.setAnimation(fieldBackground, fieldBackgroundAnim);
+
+      $("#shotclock").text("10");
+      $("#scoreboard").text("0");
+      $("#gametime").text("0");
+
+      var PlayerBase = function()
+      {
+        this.update = function ()
+        {
+          if (draggingPlayers == false)
+          {
+            gf.x(this.div, this.div.css('left'));
+            gf.y(this.div, this.div.css('top'));
+            gf.width(this.div, this.div.css('width'));
+            gf.height(this.div, this.div.css('height'));
+          }
+        };
+
+      };
+
+      var player = new PlayerBase();
+
+      player.div = addMoveable(field, currentMove, "player", 2, 3, MYTEAM);
+      gf.setAnimation(player.div, myTeamPlayerAnim.stand);
+      myPlayers.push(player);
+
+      var player2 = new PlayerBase();
+
+      player2.div = addMoveable(field, currentMove, "player2", 3, 3, OPPOSITION);
+      gf.setAnimation(player2.div, oppositionTeamPlayerAnim.stand);
+      oppositionPlayers.push(player2);
+
+      var faceoff = gf.addSprite(field, "faceoff", {width: 100, height: 100, x: 350, y: 150});
+      gf.setAnimation(faceoff, faceoffAnim.set);
+
+      var referee = gf.addSprite(field, "referee", {width: 100, height: 100, x: 250, y: 100});
+      gf.setAnimation(referee, refereeAnim.stand);
+
+      $("#startButton").remove();
+      container.css("display", "block");
+    }
+
     function movePlayers()
     {
       for (var i = 0; i < moves.length; i++)
@@ -180,6 +207,7 @@
 
             var XY = previousXY(moves[i][1]);
             var animMethod = getSpriteRunMethod(animType, moves[i]);
+            /*
             spriteThrowAndMove(div, animType.throwSideways, animMethod, animType.stand, {
               y: getCoordinate(moves[i][2]),
               x: getCoordinate(moves[i][3]),
@@ -188,7 +216,7 @@
               removeWhenDone: true,
               replaceWithDiv: moves[i][1]
             });
-  /*
+  */
             // then move
             var animMethod = getSpriteRunMethod(animType, moves[i]);
             gf.spriteMove(div, animMethod, animType.stand, {
@@ -196,7 +224,7 @@
               x: getCoordinate(moves[i][3]),
               removeWhenDone: true,
               replaceWithDiv: moves[i][1]
-            });*/
+            });
           }
           else
           {
@@ -272,7 +300,19 @@
 
     var gameLoop = function()
     {
-
+      for (var i = 0; i < myPlayers.length; i++)
+      {
+        var player = myPlayers[i];
+        player.update();
+        for (var y = 0; y < oppositionPlayers.length; y++)
+        {
+          oppositionPlayers[y].update();
+          if (gf.spriteCollide(player.div, oppositionPlayers[y].div))
+          {
+            console.log(player.div.attr('id') + " collided with " + oppositionPlayers[y].div.attr('id'));
+          }
+        }
+      }
     }
 
     var clock = function() {
@@ -297,7 +337,13 @@
     gf.addCallback(gameLoop, 30);
     gf.addCallback(clock, 1000);
 
-    $("#startButton").click(function() {
+    $("#singlePlayer").click(function() {
+      gameMode = "SINGLE";
+      gf.startGame(initialize);
+    });
+
+    $("#challengeMatch").click(function() {
+      gameMode = "CHALLENGE";
       gf.startGame(initialize);
     });
 
@@ -345,9 +391,12 @@
       }
       currentMove++;
 
-      gf.spriteMove($("#ball"), ballAnim.groundball, ballAnim.groundball, {
+      gf.spriteMove($("#ball"), ballAnim.moving, ballAnim.groundball, {
         y: getCoordinate(col),
         x: getCoordinate(row)
+      });
+      $('#ball').click(function () {
+        $("#instructions").text("Ball Clicked");
       });
     }
 
@@ -374,13 +423,16 @@
     {
       var id = ui.draggable[0].id;
       $("#" + id).attr('class', 'remove');
-
+      // get x y from draggable
       var xPos = parseInt(ui.draggable[0].style["left"].replace("px", ""));
       var yPos = parseInt(ui.draggable[0].style["top"].replace("px", ""));
+      // get the new grid rounded position
       var newXPos = Math.round(xPos / moveablesSize) * moveablesSize;
       var newYPos = Math.round(yPos / moveablesSize) * moveablesSize;
+      // calculate the row and column
       var col = (newXPos / moveablesSize);
       var row = (newYPos / moveablesSize);
+      // fade out the options
       $('.moveOption').fadeOut(200);
       $('.moveOption').promise().done(function (){$('.moveOption').remove()});
 
@@ -397,6 +449,20 @@
       }
       moveable.css({opacity: 0.3}).zIndex(1500);
       addMoveableStartingPointBack(id, previousMove(id), $("#"+id).data("myteam"));
+
+      // assign the added back div to the stored player item
+      if (id.indexOf("ball") == -1)
+      {
+        for (var i = 0; i < myPlayers.length; i++)
+        {
+          if (myPlayers[i].div.attr('id') == id)
+          {
+            myPlayers[i].div = moveable;
+            break;
+          }
+        }
+      }
+
       $(".remove").remove();
       setDraggable($("#"+id));
     }

@@ -1,8 +1,12 @@
 var moves = [];
 var currentMove = 0;
 var moveablesSize = 50;
+var gameMode = "NOTSET;"
 var MYTEAM = true;
 var OPPOSITION = false;
+var myPlayers = [];
+var oppositionPlayers = [];
+var draggingPlayers = true;
 
 function addMoveable(container, move, id, row, col, myteam)
 {
@@ -11,6 +15,7 @@ function addMoveable(container, move, id, row, col, myteam)
 
     var player = gf.addSprite(container, id, {x:x, y:y});
     player.data("myteam", myteam);
+
     saveMove(move, id, row, col);
 
     return player

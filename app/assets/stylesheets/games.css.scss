@@ -1,7 +1,17 @@
-.jumbo {
-  font-size: 80px;
-  font-weight: bold;
-  padding-top: 350px;
+.splashBackground {
+  background-image: url('splash_screen.jpg');
+  height: 400px;
+  width: 800px;
+}
+
+#singlePlayer {
+  postion: absolute;
+  margin-left: 300px;
+  margin-top: 200px;
+}
+
+#challengeMatch {
+  postion: absolute;
 }
 
 #bigscreen {

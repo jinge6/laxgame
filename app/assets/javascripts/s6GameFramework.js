@@ -194,6 +194,7 @@ gf.addSprite = function(parent, divId, options)
 }
 
 gf.transform = function(div, options){
+
     var options = $.extend({
         x: 0,
         y: 0,
@@ -254,6 +255,7 @@ gf.spriteMove = function(div, startAnim, endAnim, options){
                 $('#' + options.replaceWithDiv).css('opacity', 1);
                 div.remove();
             }
+            //TODO Think I want to do something here to let the game know that collision detection is over
         }
     });
 }
@@ -278,7 +280,7 @@ gf.addGroup = function(parent, divId, options)
 gf.x = function(div,position) {
     if(position) {
         div.css("left", position);
-        div.data("gf").x = position;
+        div.data("gf").x = position.indexOf("px") == -1 ? position : position.substring(0, position.indexOf("px"));
     } else {
         return div.data("gf").x;
     }
@@ -289,7 +291,7 @@ gf.x = function(div,position) {
 gf.y = function(div,position) {
     if(position) {
         div.css("top", position);
-        div.data("gf").y = position;
+        div.data("gf").y = position.indexOf("px") == -1 ? position : position.substring(0, position.indexOf("px"));
     } else {
         return div.data("gf").y;
     }
@@ -324,19 +326,22 @@ gf.spriteCollide = function(sprite1, sprite2){
     var option2 = sprite2.data("gf");
 
     var x = gf.intersect(
-        option1.x,
-        option1.x + option1.width,
-        option2.x,
-        option2.x + option2.width);
+        parseInt(option1.x),
+        parseInt(option1.x) + parseInt(option1.width),
+        parseInt(option2.x),
+            parseInt(option2.x) + parseInt(option2.width));
     var y = gf.intersect(
-        option1.y,
-        option1.y + option1.height,
-        option2.y,
-        option2.y + option2.height);
+        parseInt(option1.y),
+        parseInt(option1.y) + parseInt(option1.height),
+        parseInt(option2.y),
+        parseInt(option2.y) + parseInt(option2.height));
 
-    if (x[0] == x[1] || y[0] == y[1]){
+    if (x[0] == x[1] || y[0] == y[1])
+    {
         return false;
-    } else {
+    }
+    else
+    {
         return true;
     }
 }
