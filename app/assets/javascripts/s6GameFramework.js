@@ -189,6 +189,11 @@ gf.addSprite = function(parent, divId, options)
     }, options);
     var sprite = gf.spriteFragment.clone().css({left: options.x, top: options.y, width: options.width, height: options.height}).attr('id', divId).data("gf", options);
 
+    if (sprite.data("gf") == undefined)
+    {
+        sprite.data("gf", options);
+    }
+
     parent.append(sprite);
     return sprite;
 }
@@ -210,12 +215,6 @@ gf.transform = function(div, options){
 
     var gf = div.data("gf");
 
-    if (gf == undefined)
-    {
-        div.data("gf", options);
-        gf = options;
-    }
-
     if(options.flipH !== undefined){
         gf.flipH = options.flipH;
     }
@@ -231,33 +230,6 @@ gf.transform = function(div, options){
     var factorH = gf.flipH ? -1 : 1;
     var factorV = gf.flipV ? -1 : 1;
     div.css("transform", "rotate("+gf.rotate+"deg) scale("+(gf.scale*factorH)+","+(gf.scale*factorV)+")");
-}
-
-gf.spriteMove = function(div, startAnim, endAnim, options){
-    gf.setAnimation(div, startAnim, true);
-    var options = $.extend({
-        duration: 1000
-    }, options);
-
-    div.animate({
-        left: options.x,
-        top: options.y
-    }, {
-        duration: options.duration,
-        specialEasing: {
-            width: "linear",
-            height: "easeOutBounce"
-        },
-        complete: function() {
-            gf.setAnimation(div, endAnim);
-            if (options.removeWhenDone)
-            {
-                $('#' + options.replaceWithDiv).css('opacity', 1);
-                div.remove();
-            }
-            //TODO Think I want to do something here to let the game know that collision detection is over
-        }
-    });
 }
 
 gf.spriteFragment = $("<div style='position: absolute; overflow: hidden;' class='gf_sprite'></div>");
@@ -280,7 +252,7 @@ gf.addGroup = function(parent, divId, options)
 gf.x = function(div,position) {
     if(position) {
         div.css("left", position);
-        div.data("gf").x = position.indexOf("px") == -1 ? position : position.substring(0, position.indexOf("px"));
+        div.data("gf").x = position;
     } else {
         return div.data("gf").x;
     }
@@ -291,7 +263,7 @@ gf.x = function(div,position) {
 gf.y = function(div,position) {
     if(position) {
         div.css("top", position);
-        div.data("gf").y = position.indexOf("px") == -1 ? position : position.substring(0, position.indexOf("px"));
+        div.data("gf").y = position;
     } else {
         return div.data("gf").y;
     }
