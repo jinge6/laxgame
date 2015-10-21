@@ -3,11 +3,15 @@ $(document).ready(function ()
     var moves = [];
     var currentMove = 0;
     var moveablesSize = 50;
-    var gameMode = "NOTSET;"
+    var gameMode = "NOTSET";
     var MYTEAM = true;
     var OPPOSITION = false;
     var myPlayers = [];
     var oppositionPlayers = [];
+    var ball = null;
+    var ball_start = null;
+    var detectCollision = false;
+    var possession = "FREE";
 
     var myTeamPlayerAnim = {
         stand: new gf.animation({
@@ -138,17 +142,29 @@ $(document).ready(function ()
         $("#scoreboard").text("0");
         $("#gametime").text("0");
 
+        // My Team
         var player = new MovableBase();
         player.div = addMoveable(field, currentMove, "player", 2, 3, MYTEAM);
         gf.setAnimation(player.div, myTeamPlayerAnim.stand);
         player.index = myPlayers.length;
         myPlayers.push(player);
 
+        // opposition team
         var player2 = new MovableBase();
         player2.div = addMoveable(field, currentMove, "player2", 3, 3, OPPOSITION);
         gf.setAnimation(player2.div, oppositionTeamPlayerAnim.stand);
         player2.index = oppositionPlayers.length;
         oppositionPlayers.push(player2);
+
+        // ball
+
+        ball = new MovableBase();
+        ball.div = addMoveable(field, currentMove, "ball", 1, 1);
+        gf.setAnimation(ball.div, ballAnim.groundball);
+
+        ball_start = new MovableBase();
+        ball_start.div = addMoveable(field, currentMove, "ball_start", 1, 1);
+        ball_start.div.css('opacity', 0).zIndex(1200);
 
         var faceoff = gf.addSprite(field, "faceoff", {width: 100, height: 100, x: 350, y: 150});
         gf.setAnimation(faceoff, faceoffAnim.set);
@@ -165,9 +181,9 @@ $(document).ready(function ()
     {
         for (var i = 0; i < moves.length; i++)
         {
-            if (moves[i][0] == currentMove)
+            if (moves[i][0] == currentMove && moves[i][1].indexOf("_start") == -1)
             {
-                var div = $('#' + moves[i][1] + '_start');
+                var div = $('#' + moves[i][1] + "_start");
                 gf.transform(div, {flipH: orientSpriteDirection(moves[i])});
                 if (moves[i][1].indexOf("ball") == -1)
                 {
@@ -245,53 +261,96 @@ $(document).ready(function ()
         var col = getMovesRowOrColumn(id, startingMove, "col");
 
         var moveable = null;
-        for (var i=0; i<myPlayers.length; i++)
-        {
-            if (myPlayers[i].div.attr('id') == (id + "_start"))
-            {
-                moveable = myPlayers[i];
-                break;
-            }
-        }
-        if (moveable == null)
-        {
-            moveable = new MovableBase();
-            moveable.div = addMoveable(field, currentMove, id + "_start", row, col, MYTEAM);
-            gf.setAnimation(moveable.div, myTeamPlayerAnim.stand);
-            moveable.index = myPlayers.length;
-            moveable.div.data("myteam", myTeam);
-            myPlayers.push(moveable);
-        }
 
         if (id.indexOf("ball") == -1)
         {
+            for (var i=0; i<myPlayers.length; i++)
+            {
+                if (myPlayers[i].div.attr('id') == (id + "_start"))
+                {
+                    moveable = myPlayers[i];
+                    break;
+                }
+            }
+
+            if (moveable == null)
+            {
+                moveable = new MovableBase();
+                moveable.div = addMoveable(field, currentMove, id + "_start", row, col, MYTEAM);
+                gf.setAnimation(moveable.div, myTeamPlayerAnim.stand);
+                moveable.index = myPlayers.length;
+                moveable.div.data("myteam", myTeam);
+                myPlayers.push(moveable);
+            }
+
             var animType = moveable.div.data("myteam") == true ? myTeamPlayerAnim : oppositionTeamPlayerAnim;
             gf.setAnimation(moveable.div, animType.stand);
+            moveable.div.css('opacity', 1).zIndex(1200);
         }
         else
         {
-            gf.setAnimation(moveable.div, ballAnim.groundball);
+            gf.setAnimation(ball_start.div, ballAnim.groundball);
+            ball_start.div.css('opacity', 1).zIndex(1200);
         }
-        moveable.div.zIndex(1000);
     }
 
 
 
     var gameLoop = function()
     {
-        for (var i = 0; i < myPlayers.length; i++)
+        detectCollisions();
+    }
+
+    function detectCollisions()
+    {
+        if (detectCollision == true)
         {
-            var player = myPlayers[i];
-            player.update();
-            for (var y = 0; y < oppositionPlayers.length; y++)
+            // find out where the ball's are
+            ball_start.update();
+
+            for (var i = 0; i < myPlayers.length; i++)
             {
-                oppositionPlayers[y].update();
-                if (gf.spriteCollide(player.div, oppositionPlayers[y].div))
+                var player = myPlayers[i];
+                player.update();
+                if (gf.spriteCollide(player.div, ball_start.div))
                 {
-                    console.log(player.div.attr('id') + " collided with " + oppositionPlayers[y].div.attr('id'));
+                    ballCollision(player.div, ball_start.div);
+                }
+
+                for (var y = 0; y < oppositionPlayers.length; y++)
+                {
+                    oppositionPlayers[y].update();
+                    if (gf.spriteCollide(oppositionPlayers[y].div, ball_start.div))
+                    {
+                        ballCollision(oppositionPlayers[y].div, ball_start.div);
+                    }
+
+                    if (gf.spriteCollide(player.div, oppositionPlayers[y].div))
+                    {
+                        playerCollision(player.div, oppositionPlayers[y].div);
+                    }
                 }
             }
         }
+    }
+
+    function playerCollision(moveable1, moveable2)
+    {
+        console.log(moveable1.data("myteam") + ' ' + moveable1.attr('id') + " collided with " + moveable2.attr('id'));
+    }
+
+    function ballCollision(player, ball)
+    {
+        if(player.data("myteam"))
+        {
+            possession = "MINE";
+        }
+        else
+        {
+            possession = "THEIRS";
+        }
+
+        console.log(possession + ' ' + player.attr('id') + " intercepted ball");
     }
 
     var clock = function() {
@@ -300,11 +359,15 @@ $(document).ready(function ()
 
         if (shotclockTime <= 0)
         {
+            detectCollision = true;
+            setTimeout(function(){
+                possession = "FREE";
+                detectCollision = false;
+                $("#shotclock").text(10);
+                currentMove++;
+                $("#instructions").text("Make your next move!! Choose wisely");
+            }, 1500);
             movePlayers();
-            $("#shotclock").text(10);
-            currentMove++;
-            $("#instructions").text("Make your next move!! Choose wisely");
-
         }
         else
         {
@@ -313,7 +376,7 @@ $(document).ready(function ()
         }
     }
 
-    gf.addCallback(gameLoop, 500);
+    gf.addCallback(gameLoop, 30);
     gf.addCallback(clock, 1000);
 
     $("#singlePlayer").click(function() {
@@ -460,6 +523,15 @@ $(document).ready(function ()
 
         saveMove(move, id, row, col);
 
+        if (id.indexOf("_start") == -1)
+        {
+            player.zIndex(1500);
+        }
+        else
+        {
+            player.zIndex(1200);
+        }
+
         return player
     }
 
@@ -580,10 +652,10 @@ $(document).ready(function ()
                 gf.setAnimation(div, endAnim);
                 if (options.removeWhenDone)
                 {
-                    $('#' + options.replaceWithDiv).css('opacity', 1);
-                    $("#" + div.attr('id')).remove();
+                    $('#' + options.replaceWithDiv).css('opacity', 1).zIndex(1500);
+                    // make _start opacity 0
+                    $("#" + div.attr('id')).css('opacity', 0).zIndex(1200);
                 }
-                //TODO Think I want to do something here to let the game know that collision detection is over
             }
         });
     }
