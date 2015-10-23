@@ -11,6 +11,7 @@ $(document).ready(function ()
     var ball = null;
     var ball_start = null;
     var detectCollision = false;
+    var collisions = [];
     var possession = "FREE";
 
     var myTeamPlayerAnim = {
@@ -179,6 +180,7 @@ $(document).ready(function ()
 
     function movePlayers()
     {
+        collisions = [];
         for (var i = 0; i < moves.length; i++)
         {
             if (moves[i][0] == currentMove && moves[i][1].indexOf("_start") == -1)
@@ -196,27 +198,21 @@ $(document).ready(function ()
                      y: getCoordinate(moves[i][2]),
                      x: getCoordinate(moves[i][3]),
                      start_x: getCoordinate(XY[0]),
-                     start_y: getCoordinate(XY[1]),
-                     removeWhenDone: true,
-                     replaceWithDiv: moves[i][1]
+                     start_y: getCoordinate(XY[1])
                      });
                      */
                     // then move
                     var animMethod = getSpriteRunMethod(animType, moves[i]);
                     spriteMove(div, animMethod, animType.stand, {
                         y: getCoordinate(moves[i][2]),
-                        x: getCoordinate(moves[i][3]),
-                        removeWhenDone: true,
-                        replaceWithDiv: moves[i][1]
+                        x: getCoordinate(moves[i][3])
                     });
                 }
                 else
                 {
                     spriteMove(div, ballAnim.moving, ballAnim.groundball, {
                         y: getCoordinate(moves[i][2]),
-                        x: getCoordinate(moves[i][3]),
-                        removeWhenDone: true,
-                        replaceWithDiv: moves[i][1]
+                        x: getCoordinate(moves[i][3])
                     });
                 }
             }
@@ -341,16 +337,39 @@ $(document).ready(function ()
 
     function ballCollision(player, ball)
     {
-        if(player.data("myteam"))
+        if (!collisionExists(ball))
         {
-            possession = "MINE";
-        }
-        else
-        {
-            possession = "THEIRS";
-        }
+            // set the collision data. We then adjust in spriteMove when the animation is complete
+            if (player.data("myteam"))
+            {
+                possession = "MINE";
+                gf.removeAnimation(player);
+                gf.removeAnimation(ball);
+                ball.css('opacity', 0);
+                player.css('opacity', 0);
+                collisions.push([player.attr('id'), getRoundedGridPosition(gf.x(player)), getRoundedGridPosition(gf.y(player))]);
+                collisions.push([ball.attr('id'), getRoundedGridPosition(gf.x(ball)), getRoundedGridPosition(gf.y(ball))]);
+            }
+            else {
+                possession = "THEIRS";
+            }
 
-        console.log(possession + ' ' + player.attr('id') + " intercepted ball");
+            console.log(possession + ' ' + player.attr('id') + " intercepted ball");
+        }
+    }
+
+    function collisionExists(div)
+    {
+        var foundCollision = false;
+        for (var i=0; i<collisions.length; i++)
+        {
+            if (collisions[i][0] == div.attr('id'))
+            {
+                foundCollision = true;
+                break;
+            }
+        }
+        return foundCollision
     }
 
     var clock = function() {
@@ -469,8 +488,8 @@ $(document).ready(function ()
         var xPos = parseInt(ui.draggable[0].style["left"].replace("px", ""));
         var yPos = parseInt(ui.draggable[0].style["top"].replace("px", ""));
         // get the new grid rounded position
-        var newXPos = Math.round(xPos / moveablesSize) * moveablesSize;
-        var newYPos = Math.round(yPos / moveablesSize) * moveablesSize;
+        var newXPos = getRoundedGridPosition(xPos);
+        var newYPos = getRoundedGridPosition(yPos);
         // calculate the row and column
         var col = (newXPos / moveablesSize);
         var row = (newYPos / moveablesSize);
@@ -601,6 +620,11 @@ $(document).ready(function ()
         return rowOrCol * moveablesSize
     }
 
+    function getRoundedGridPosition(position)
+    {
+        return Math.round(parseInt(position) / moveablesSize) * moveablesSize;
+    }
+
     function orientSpriteDirection(movesArrayRow)
     {
         var startFrom = 0;
@@ -626,9 +650,7 @@ $(document).ready(function ()
         setTimeout(function() {
             spriteMove(div, runAnim, endAnim, {
                 y: options.y,
-                x: options.x,
-                removeWhenDone: true,
-                replaceWithDiv: options.replaceWithDiv
+                x: options.x
             });
         }, 600);
     }
@@ -648,16 +670,52 @@ $(document).ready(function ()
                 width: "linear",
                 height: "easeOutBounce"
             },
-            complete: function() {
+            complete: function()
+            {
+                // It is always the _start item that moves
+                // start and the actual item will always exist
+                adjustIfCollided(div);
                 gf.setAnimation(div, endAnim);
-                if (options.removeWhenDone)
-                {
-                    $('#' + options.replaceWithDiv).css('opacity', 1).zIndex(1500);
-                    // make _start opacity 0
-                    $("#" + div.attr('id')).css('opacity', 0).zIndex(1200);
-                }
+                toggleStartAndFinish(div);
             }
         });
+    }
+
+    function toggleStartAndFinish(startDiv)
+    {
+        var id = startDiv.attr('id').substring(0, startDiv.attr('id').indexOf("_start"));
+        if (startDiv.zIndex() == 1500)
+        {
+            $('#' + id).css('opacity', 1).zIndex(1500);
+            // make _start opacity 0
+            $("#" + startDiv.attr('id')).css('opacity', 0).zIndex(1200);
+        }
+        else
+        {
+            $('#' + id).css('opacity', 1).zIndex(1200);
+            // make _start opacity 0
+            $("#" + startDiv.attr('id')).css('opacity', 0).zIndex(1500);
+        }
+    }
+
+    function adjustIfCollided(startDiv)
+    {
+        var spliceAt = -1;
+
+        for (var i=0; i<collisions.length; i++)
+        {
+            if (collisions[i][0] == startDiv.attr('id'))
+            {
+                var id = startDiv.attr('id').substring(0, startDiv.attr('id').indexOf("_start"));
+                spliceAt = i;
+                gf.x(startDiv, collisions[i][1]);
+                gf.y(startDiv, collisions[i][2]);
+                gf.x($("#"+id), collisions[i][1]);
+                gf.y($("#"+id), collisions[i][2]);
+                break;
+            }
+        }
+        return (spliceAt != -1)
     }
 
     function getMovesRowOrColumn(id, constrainFromMove, rowOrColumn)

@@ -130,6 +130,19 @@ gf.refreshGame = function (){
     gf.time = (new Date()).getTime();
 }
 
+gf.removeAnimation = function(div)
+{
+    for (var i=0; i < gf.animations.length; i++)
+    {
+
+        if (gf.animations[i].div.attr('id') == div.attr('id'))
+        {
+            gf.animations.splice(i, 1);
+            break;
+        }
+    }
+}
+
 gf.setAnimation = function(div, animation, loop)
 {
     var animate = {
