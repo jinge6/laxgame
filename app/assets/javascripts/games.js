@@ -14,6 +14,18 @@ $(document).ready(function ()
     var collisions = [];
     var possession = "FREE";
 
+    var direction = [
+        [0, -moveablesSize], // North 0
+        [moveablesSize, -moveablesSize], //North East 1
+        [moveablesSize, 0], // East 2
+        [moveablesSize, moveablesSize], // South East 3
+        [0, -moveablesSize], // South 4
+        [-moveablesSize, -moveablesSize], // South West 5
+        [-moveablesSize, 0], // West 6
+        [-moveablesSize, -moveablesSize], // North West 7
+        [0,0] // nowhere
+    ];
+
     var myTeamPlayerAnim = {
         stand: new gf.animation({
             url: "/assets/standing_sprite.png"
@@ -145,14 +157,14 @@ $(document).ready(function ()
 
         // My Team
         var player = new MovableBase();
-        player.div = addMoveable(field, currentMove, "player", 2, 3, MYTEAM);
+        player.div = addMoveable(field, currentMove, "player", 2, 2, MYTEAM);
         gf.setAnimation(player.div, myTeamPlayerAnim.stand);
         player.index = myPlayers.length;
         myPlayers.push(player);
 
         // opposition team
         var player2 = new MovableBase();
-        player2.div = addMoveable(field, currentMove, "player2", 3, 3, OPPOSITION);
+        player2.div = addMoveable(field, currentMove, "player2", 3, 12, OPPOSITION);
         gf.setAnimation(player2.div, oppositionTeamPlayerAnim.stand);
         player2.index = oppositionPlayers.length;
         oppositionPlayers.push(player2);
@@ -160,11 +172,11 @@ $(document).ready(function ()
         // ball
 
         ball = new MovableBase();
-        ball.div = addMoveable(field, currentMove, "ball", 1, 1);
+        ball.div = addMoveable(field, currentMove, "ball", 3, 3);
         gf.setAnimation(ball.div, ballAnim.groundball);
 
         ball_start = new MovableBase();
-        ball_start.div = addMoveable(field, currentMove, "ball_start", 1, 1);
+        ball_start.div = addMoveable(field, currentMove, "ball_start", 3, 3);
         ball_start.div.css('opacity', 0).zIndex(1200);
 
         var faceoff = gf.addSprite(field, "faceoff", {width: 100, height: 100, x: 350, y: 150});
@@ -335,27 +347,92 @@ $(document).ready(function ()
         console.log(moveable1.data("myteam") + ' ' + moveable1.attr('id') + " collided with " + moveable2.attr('id'));
     }
 
-    function ballCollision(player, ball)
+    function ballCollision(player, ballStart)
     {
-        if (!collisionExists(ball))
+        if (!collisionExists(ballStart))
         {
             // set the collision data. We then adjust in spriteMove when the animation is complete
             if (player.data("myteam"))
             {
                 possession = "MINE";
-                gf.removeAnimation(player);
-                gf.removeAnimation(ball);
-                ball.css('opacity', 0);
-                player.css('opacity', 0);
-                collisions.push([player.attr('id'), getRoundedGridPosition(gf.x(player)), getRoundedGridPosition(gf.y(player))]);
-                collisions.push([ball.attr('id'), getRoundedGridPosition(gf.x(ball)), getRoundedGridPosition(gf.y(ball))]);
             }
             else {
                 possession = "THEIRS";
             }
+            gf.removeAnimation(player);
+            gf.removeAnimation(ballStart);
+            $("#ball").css('opacity', 0);
+            ballStart.css('opacity', 0);
+            player.css('opacity', 0);
+            var xy = adjustBasedOnMoveableDirection("ball", parseInt(gf.x(ballStart)), parseInt(gf.y(ballStart)));
 
-            console.log(possession + ' ' + player.attr('id') + " intercepted ball");
+            collisions.push([player.attr('id'), getRoundedGridPosition(xy[0]), getRoundedGridPosition(xy[1])]);
+            collisions.push([ballStart.attr('id'), getRoundedGridPosition(xy[0]), getRoundedGridPosition(xy[1])]);
         }
+    }
+
+    function adjustBasedOnMoveableDirection(id, x, y)
+    {
+        var startingY = getCoordinate(getMovesRowOrColumn(id, previousMove(id), "row"));
+        var startingX = getCoordinate(getMovesRowOrColumn(id, previousMove(id), "col"));
+
+        console.log(startingX, startingY, x, y);
+
+        if (x == startingX && y < startingY)
+        {
+            console.log("north");
+            // North
+            xy = direction[0];
+        }
+        else if (x > startingX && y < startingY)
+        {
+            console.log("north east");
+            // North East
+            xy = direction[1];
+        }
+        else if (x > startingX && y == startingY)
+        {
+            console.log("east");
+            // East
+            xy = direction[2];
+        }
+        else if (x > startingX && y > startingY)
+        {
+            console.log("south east");
+            // South East
+            xy = direction[3];
+        }
+        else if (x == startingX && y > startingY)
+        {
+            console.log("south");
+            // South
+            xy = direction[4];
+        }
+        else if (x < startingX && y > startingY)
+        {
+            console.log("south west");
+            // South West
+            xy = direction[5];
+        }
+        else if (x < startingX && y == startingY)
+        {
+            console.log("west");
+            // West
+            xy = direction[6];
+        }
+        else if (x < startingX && y < startingY)
+        {
+            console.log("north west");
+            // North west
+            xy = direction[7];
+        }
+        else
+        {
+            console.log("nowhere");
+            xy = direction[8];
+        }
+
+        return [x + xy[0], y + xy[1]];
     }
 
     function collisionExists(div)
@@ -379,14 +456,14 @@ $(document).ready(function ()
         if (shotclockTime <= 0)
         {
             detectCollision = true;
+            $("#shotclock").text(10);
+            movePlayers();
             setTimeout(function(){
                 possession = "FREE";
                 detectCollision = false;
-                $("#shotclock").text(10);
                 currentMove++;
                 $("#instructions").text("Make your next move!! Choose wisely");
-            }, 1500);
-            movePlayers();
+            }, 1100);
         }
         else
         {
@@ -684,30 +761,17 @@ $(document).ready(function ()
     function toggleStartAndFinish(startDiv)
     {
         var id = startDiv.attr('id').substring(0, startDiv.attr('id').indexOf("_start"));
-        if (startDiv.zIndex() == 1500)
-        {
-            $('#' + id).css('opacity', 1).zIndex(1500);
-            // make _start opacity 0
-            $("#" + startDiv.attr('id')).css('opacity', 0).zIndex(1200);
-        }
-        else
-        {
-            $('#' + id).css('opacity', 1).zIndex(1200);
-            // make _start opacity 0
-            $("#" + startDiv.attr('id')).css('opacity', 0).zIndex(1500);
-        }
+        $('#' + id).css('opacity', 1).zIndex(1500);
+        $("#" + startDiv.attr('id')).css('opacity', 0).zIndex(1200);
     }
 
     function adjustIfCollided(startDiv)
     {
-        var spliceAt = -1;
-
         for (var i=0; i<collisions.length; i++)
         {
             if (collisions[i][0] == startDiv.attr('id'))
             {
                 var id = startDiv.attr('id').substring(0, startDiv.attr('id').indexOf("_start"));
-                spliceAt = i;
                 gf.x(startDiv, collisions[i][1]);
                 gf.y(startDiv, collisions[i][2]);
                 gf.x($("#"+id), collisions[i][1]);
@@ -715,7 +779,6 @@ $(document).ready(function ()
                 break;
             }
         }
-        return (spliceAt != -1)
     }
 
     function getMovesRowOrColumn(id, constrainFromMove, rowOrColumn)
